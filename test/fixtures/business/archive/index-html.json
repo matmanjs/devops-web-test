@@ -1,0 +1,1 @@
+{"list1":[{"msg":"已配置不执行端对端测试！"},{"url":"unit_test_report_01/mochawesome.html","msg":"单元测试详细报告"},{"url":"coverage/index.html","msg":"单元测试覆盖率报告"}],"list2":[{"url":"output.zip","msg":"output.zip"},{"url":"test-record.json","msg":"test-record.json"}]}

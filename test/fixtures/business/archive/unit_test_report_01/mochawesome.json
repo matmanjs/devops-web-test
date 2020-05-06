@@ -1,0 +1,21 @@
+{
+    "stats": {
+        "suites": 54,
+        "tests": 436,
+        "passes": 431,
+        "pending": 4,
+        "failures": 0,
+        "start": "2020-02-25T11:41:19.239Z",
+        "end": "2020-02-25T11:41:19.351Z",
+        "duration": 112,
+        "testsRegistered": 436,
+        "passPercent": 0.99770642201,
+        "pendingPercent": 0.9174311926605505,
+        "other": 0,
+        "hasOther": false,
+        "skipped": 1,
+        "hasSkipped": false
+    },
+    "results": [],
+    "meta": {}
+}

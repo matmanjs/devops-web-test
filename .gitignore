@@ -102,3 +102,9 @@ dist
 
 # TernJS port file
 .tern-port
+
+.idea
+
+DevOps/**/**/node_modules
+DevOps/**/**/build
+test/tmp-devops-app
