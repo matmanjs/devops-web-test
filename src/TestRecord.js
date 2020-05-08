@@ -7,10 +7,10 @@ class TestRecord {
         // devops-app 目录的根路径，自动化测试项目根目录
         this.basePath = util.getAbsolutePath(basePath);
 
-        // 产物输出目录
+        // 测试产物输出目录
         this.outputPath = util.getAbsolutePath(this.basePath, config.outputPath || 'output');
 
-        // 工作区的路径，相当于这个 git 仓库的根目录，在蓝盾中拉到的项目根目录
+        // 工作区间的路径，即项目的根目录，如果是 git 项目，则是 git 仓库的根目录
         this.workspacePath = util.getAbsolutePath(this.basePath, config.workspacePath || '../../');
 
         // 是否为开发者模式
