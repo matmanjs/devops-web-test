@@ -33,7 +33,7 @@ class PluginUnitTest extends BasePlugin {
          * @type {String|Function}
          */
         this.installCmd = opts.installCmd || function (testRecord) {
-            return `tnpm install`;
+            return `npm install`;
         };
 
         /**

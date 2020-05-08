@@ -33,7 +33,7 @@ class PluginProject extends BasePlugin {
          * @type {String|Function}
          */
         this.installCmd = opts.installCmd || function (testRecord) {
-            return `tnpm install`;
+            return `npm install`;
         };
 
         /**
@@ -41,7 +41,7 @@ class PluginProject extends BasePlugin {
          * @type {String|Function}
          */
         this.buildCmd = opts.buildCmd || function (port, testRecord) {
-            return `tnpm start`;
+            return `npm start`;
         };
 
         /**

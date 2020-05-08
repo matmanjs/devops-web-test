@@ -42,7 +42,7 @@ class PluginE2ETest extends BasePlugin {
          * @type {String|Function}
          */
         this.installCmd = opts.installCmd || function (testRecord) {
-            return `tnpm install`;
+            return `npm install`;
         };
 
         /**
@@ -50,7 +50,7 @@ class PluginE2ETest extends BasePlugin {
          * @type {String|Function}
          */
         this.buildCmd = opts.buildCmd || function (testRecord) {
-            return `tnpm run build`;
+            return `npm run build`;
         };
 
         const self = this;
