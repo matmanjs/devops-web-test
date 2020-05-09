@@ -61,11 +61,6 @@
 
 ### PluginProject
 
-项目插件。
-
-
-### PluginProject
-
 工程项目插件，即我们原始的工程，自动化测试时，我们可能需要安装依赖和构建等操作。
 
 #### constructor(name, opts)
@@ -135,6 +130,68 @@ await this.clean(testRecord);
 #### async findPort(testRecord)
 
 获得可用的端口号，并存储在 `this.port` 中
+
+
+
+### PluginUnitTest
+
+单元测试项目插件。
+
+#### constructor(name, opts)
+
+- `name`，`String`，插件的名字
+- `opts`，`Object`，插件的配置，不同插件可能有不同的区别
+  - `opts.shouldSkip`，`Boolean|Function`，是否应该跳过执行，当为函数时，接受 `testRecord` 参数
+  - `opts.rootPath`，`String`，项目根路径，默认值：由于我们推荐 `DWT` 路径为 `DevOps/devops-app` ，因此默认值为 `path.join(dwtPath, '../../')`
+  - `opts.outputPath`，`String`，单元测试结果输出的路径，默认值：`path.join(testRecord.outputPath, 'unit_test_report')` 
+  - `opts.coverageOutputPath`，`String`，单元测试的覆盖率输出的路径，推荐放在单元测试结果输出文件夹内，默认值：`path.join(this.outputPath, 'coverage')` 
+  - `opts.testCmd`，`String|Function`，执行测试的命令，当其为函数时，会传入参数 `testRecorder`，默认值为 `function (testRecord) { return 'npm test'; }`
+  - `opts.coverageCmd`，`String|Function`，执行测试的命令，当其为函数时，会传入参数 `testRecorder` 和 `testCmdToExecute`(实际执行的测试的命令)，默认值为 `function (testRecord, testCmdToExecute) { return 'npm run coverage'; }`
+  - `opts.onBeforeTest`，`Function`，在运行测试之前执行的钩子函数，会传入参数 `testRecorder` 和 `util`
+  - `opts.testCompleteCheck`，`Function`，检查构建是否完成，会传入参数 `data` ，代表的时控制台输出，在某些场景下，可以通过判断某些输出，来判断构建已经结束，如果返回 `true`，则将强制结束构建，默认值为 `function (data) { return false; }`
+  - `opts.coverageCompleteCheck`，`Function`，检查覆盖率是否完成，会传入参数 `testRecorder` ，由于生成覆盖率文件是异步的，某些时候需要实际去检查所需要的覆盖率文件是否实际已经完成，此时可以用该方法
+
+
+#### async init(testRecord)
+
+初始化插件，需要处理的事情包括：
+
+- 将 `rootPath` 修改为绝对路径
+- 将 `outputPath` 修改为绝对路径
+- 将 `coverageOutputPath` 修改为绝对路径
+
+#### async beforeRun(testRecord)
+
+运行自动化测试之前执行，暂无。
+
+#### async run(testRecord)
+
+运行自动化测试，需要处理的事情包括：
+
+```
+// 在运行测试之前执行的钩子函数
+if (typeof this.onBeforeTest === 'function') {
+    await Promise.resolve(this.onBeforeTest.call(this, testRecord, util));
+}
+
+// 启动测试
+await this.runTest(testRecord);
+
+// 获取单元测试覆盖率
+await this.runCoverage(testRecord);
+```
+
+#### async afterRun(testRecord)
+
+运行自动化测试之后执行，暂无。
+
+#### async runTest(testRecord)
+
+启动测试，执行 `this.testCmd` 命令
+
+#### async runCoverage(testRecord)
+
+构建项目，执行 `this.coverageCmd` 命令
 
 
 

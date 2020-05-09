@@ -11,7 +11,7 @@ class PluginProject extends BasePlugin {
         super(name || 'pluginProject', opts);
 
         /**
-         * 项目根路径。
+         * 项目根路径
          * 默认值： 由于我们推荐 DWT 路径为 DevOps/devops-app ，因此相对而言项目路径为 ../../
          *
          * @type {String}
@@ -128,6 +128,10 @@ class PluginProject extends BasePlugin {
             return Promise.resolve();
         }
 
+        if (typeof this.installCmd === 'function') {
+            this.installCmd = this.installCmd.bind(this);
+        }
+
         const cmd = util.getFromStrOrFunc(this.installCmd, testRecord);
 
         const command = `${cmd} --${this._processKey}`;
@@ -141,6 +145,10 @@ class PluginProject extends BasePlugin {
      * @param testRecord
      */
     async build(testRecord) {
+        if (typeof this.buildCmd === 'function') {
+            this.buildCmd = this.buildCmd.bind(this);
+        }
+
         const cmd = util.getFromStrOrFunc(this.buildCmd, this.port, testRecord);
 
         const command = `${cmd} --${this._processKey}`;

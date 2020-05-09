@@ -11,51 +11,48 @@ class PluginUnitTest extends BasePlugin {
         super(name || 'pluginUnitTest', opts);
 
         /**
-         * 单元根路径，由于蓝盾测试项目为 DevOps/devops-app ，因此相对而言项目路径为 ../../
+         * 单元根路径
+         * 默认值： 由于我们推荐 DWT 路径为 DevOps/devops-app ，因此相对而言项目路径为 ../../
+         *
          * @type {String}
          */
         this.rootPath = opts.rootPath || '../../';
 
         /**
-         * 单元测试输出的路径
+         * 单元测试结果输出的路径
+         *
          * @type {String}
          */
         this.outputPath = '';
 
         /**
          * 单元测试的覆盖率输出的路径，在 this.outputPath 之内
+         *
          * @type {String}
          */
         this.coverageOutputPath = '';
 
         /**
-         * 安装依赖时执行的命令，当其为函数时，会传入参数 testRecorder
-         * @type {String|Function}
-         */
-        this.installCmd = opts.installCmd || function (testRecord) {
-            return `npm install`;
-        };
-
-        /**
-         * 执行测试的命令
+         * 执行测试的命令，当其为函数时，会传入参数 testRecorder
+         *
          * @type {String|Function}
          */
         this.testCmd = opts.testCmd || function (testRecord) {
-            return `npx cross-env BABEL_ENV=test mocha`;
+            return 'npm test';
         };
 
         /**
-         * 执行测试的命令
-         * @type {String|Function} 接受两个参数：testCmd, testRecord
+         * 执行获取测试覆盖率的命令
+         * @type {String|Function} 接受两个参数：testRecord, testCmdToExecute
          */
-        this.coverageCmd = opts.coverageCmd || function (testCmd, testRecord) {
-            return `npx nyc --silent ${testCmd.replace(/^npx\s+/, ' ')}`;
+        this.coverageCmd = opts.coverageCmd || function (testRecord, testCmdToExecute) {
+            return 'npm run coverage';
         };
 
         /**
          * 在运行测试之前执行的钩子函数
          *
-         * @type {Function} 接受两个参数：testRecord, runCmd
+         * @type {Function} 接受两个参数：testRecord, util
          */
         this.onBeforeTest = opts.onBeforeTest;
 
@@ -87,6 +84,7 @@ class PluginUnitTest extends BasePlugin {
         this.outputPath = path.join(testRecord.outputPath, 'unit_test_report');
         this.coverageOutputPath = path.join(this.outputPath, 'coverage');
 
+        // TODO 需要移除
         testRecord.addTestCustomParams({
             unitTestRelativePathToOutput: path.relative(testRecord.outputPath, this.outputPath),
             unitTestCoverageRelativePathToOutput: path.relative(testRecord.outputPath, this.coverageOutputPath)
@@ -111,12 +109,9 @@ class PluginUnitTest extends BasePlugin {
         console.log('\n');
         console.log('ready to runTest for unit test ...');
 
-        // 安装依赖
-        await this.install(testRecord);
-
         // 在运行测试之前执行的钩子函数
         if (typeof this.onBeforeTest === 'function') {
-            await Promise.resolve(this.onBeforeTest.call(this, testRecord, runCmd));
+            await Promise.resolve(this.onBeforeTest.call(this, testRecord, util));
         }
 
         // 启动测试
@@ -140,23 +135,6 @@ class PluginUnitTest extends BasePlugin {
      */
     async afterRun(testRecord) {
         await super.afterRun(testRecord);
-    }
-
-    /**
-     * 安装依赖
-     *
-     * @param testRecord
-     */
-    async install(testRecord) {
-        if (testRecord.isDev) {
-            return Promise.resolve();
-        }
-
-        const cmd = util.getFromStrOrFunc(this.installCmd, testRecord);
-
-        const command = `${cmd}`;
-
-        await runCmd.runByExec(command, { cwd: this.rootPath });
     }
 
     /**
