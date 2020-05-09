@@ -1,5 +1,4 @@
 const path = require('path');
-const runCmd = require('../util/run-cmd');
 const util = require('../util');
 
 const BasePlugin = require('./BasePlugin');
@@ -148,7 +147,7 @@ class PluginUnitTest extends BasePlugin {
         // 获得测试命令
         const command = util.getFromStrOrFunc(this.testCmd, testRecord);
 
-        await runCmd.runByExec(command, { cwd: this.rootPath }, this.testCompleteCheck.bind(this));
+        await util.runByExec(command, { cwd: this.rootPath }, this.testCompleteCheck.bind(this));
 
         this._cacheTestCmd = command;
     }
@@ -167,7 +166,7 @@ class PluginUnitTest extends BasePlugin {
 
         this._cacheCoverageCmd = command;
 
-        await runCmd.runByExec(command, { cwd: this.rootPath });
+        await util.runByExec(command, { cwd: this.rootPath });
 
         // 检查文件已经存在才算结束
         // 2020.3.13 发现命令执行完成时，coverage 文件夹可能还没有来的及生成

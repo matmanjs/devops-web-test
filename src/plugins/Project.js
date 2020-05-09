@@ -1,6 +1,4 @@
-const runCmd = require('../util/run-cmd');
 const util = require('../util');
-const utilPort = require('../util/port');
 const businessProcessHandler = require('../business/process-handler');
 const businessLocalCache = require('../business/local-cache');
 
@@ -136,7 +134,7 @@ class PluginProject extends BasePlugin {
 
         const command = `${cmd} --${this._processKey}`;
 
-        await runCmd.runByExec(command, { cwd: this.rootPath });
+        await util.runByExec(command, { cwd: this.rootPath });
     }
 
     /**
@@ -153,7 +151,7 @@ class PluginProject extends BasePlugin {
 
         const command = `${cmd} --${this._processKey}`;
 
-        await runCmd.runByExec(command, { cwd: this.rootPath }, this.buildCompleteCheck);
+        await util.runByExec(command, { cwd: this.rootPath }, this.buildCompleteCheck);
     }
 
     /**
@@ -174,9 +172,9 @@ class PluginProject extends BasePlugin {
 
         // 清理 whistle 的端口
         if (this.port) {
-            await utilPort.killPort(this.port)
+            await util.killPort(this.port)
                 .catch((err) => {
-                    console.log(`utilPort.kill killPort`, this.port, err);
+                    console.log(`util.kill killPort`, this.port, err);
                 });
 
             console.log(`already clean project port=${this.port}!`);
@@ -205,7 +203,7 @@ class PluginProject extends BasePlugin {
         const usedPort = businessLocalCache.getUsedPort();
 
         // 获得可用的端口
-        this.port = await utilPort.findAvailablePort(9528, usedPort);
+        this.port = await util.findAvailablePort(9528, usedPort);
 
         // 缓存在本地
         businessLocalCache.saveUsedPort('project', this.port, testRecord);
