@@ -13,45 +13,52 @@ class PluginProject extends BasePlugin {
         /**
          * 项目根路径。
          * 默认值： 由于我们推荐 DWT 路径为 DevOps/devops-app ，因此相对而言项目路径为 ../../
+         *
          * @type {String}
          */
         this.rootPath = opts.rootPath || '../../';
 
         /**
-         * 是否需要一个端口，有些场景下本地启动会需要一个端口，例如 webpack 构建项目时使用热更新模式
+         * 是否需要端口，有些开发场景时，启动项目会使用一个端口，
+         * 例如 webpack 构建项目时使用热更新模式下，就需要一个端口
+         *
          * @type {Boolean}
          */
         this.usePort = !!opts.usePort || false;
 
         /**
          * 项目启动时需要占用的端口号，取值为 >= 0 and < 65536
+         * 当 usePort 为 true 时，若没有传入，则会自动找到未被占用的端口
+         *
          * @type {Number}
          */
         this.port = opts.port || 0;
 
         /**
          * 安装依赖时执行的命令，当其为函数时，会传入参数 testRecorder
+         *
          * @type {String|Function}
          */
         this.installCmd = opts.installCmd || function (testRecord) {
-            return `npm install`;
+            return 'npm install';
         };
 
         /**
          * 构建项目时执行的命令，当其为函数时，会传入参数 port 和 testRecorder
+         *
          * @type {String|Function}
          */
         this.buildCmd = opts.buildCmd || function (port, testRecord) {
-            return `npm start`;
+            return 'npm start';
         };
 
         /**
          * 检查构建是否完成，传入 data 参数，代表的是控制台输出，在某些场景下，可以通过判断某些输出，来判断构建已经结束，如果返回 true，则将强制结束构建
          * @type {Function}
          */
-        this.buildCompleteCheck = (typeof opts.buildCompleteCheck === 'function' ? opts.buildCompleteCheck : function (data) {
+        this.buildCompleteCheck = (typeof opts.buildCompleteCheck === 'function') ? opts.buildCompleteCheck : function (data) {
             return false;
-        });
+        };
     }
 
     /**
@@ -88,7 +95,7 @@ class PluginProject extends BasePlugin {
         console.log('\n');
         console.log('ready to start project build ...');
 
-        // 进入项目中安装依赖，注意自动化测试需要依赖npm，因此此步骤不能省略
+        // 进入项目中安装依赖
         await this.install(testRecord);
 
         // 获取 project 的端口号
