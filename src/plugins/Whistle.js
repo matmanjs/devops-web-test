@@ -1,14 +1,10 @@
 const path = require('path');
 const fse = require('fs-extra');
-const ejs = require('ejs');
-const _ = require('lodash');
-
-const utilPort = require('../util/port');
-const runCmd = require('../util/run-cmd');
-const businessProcessHandler = require('../business/process-handler');
-const businessLocalCache = require('../business/local-cache');
 
 const util = require('../util');
+
+const businessProcessHandler = require('../business/process-handler');
+const businessLocalCache = require('../business/local-cache');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -18,21 +14,26 @@ class PluginWhistle extends BasePlugin {
 
         /**
          * 项目启动时需要占用的端口号，取值为 >= 0 and < 65536
+         *
          * @type {Number}
          */
         this.port = opts.port || 0;
 
         /**
          * 获得 whistle 规则
+         *
          * @type {Function}
          */
         this.getWhistleRules = (typeof opts.getWhistleRules === 'function' ? opts.getWhistleRules : function (testRecord) {
-            return `# 也许你需要配置下代理 \n ${JSON.stringify(testRecord, null, 2)}`;
+            return {
+                rules: `# 也许你需要配置下代理 \n ${JSON.stringify(testRecord, null, 2)}`
+            };
         });
 
         /**
          * whistle 配置文件路径，自动生成，一般情况下无需修改，
          * whistle 启动时会加载这个文件的配置
+         *
          * @type {String}
          */
         this.configFileName = 'test.whistle.js';
@@ -104,18 +105,15 @@ class PluginWhistle extends BasePlugin {
      * @param testRecord
      */
     async generateConfigFile(testRecord) {
-        const name = this._processKey;
-
         const whistleRules = this.getWhistleRules(testRecord);
 
+        // 校验合法性
         if (!whistleRules || !whistleRules.name || !whistleRules.rules) {
             console.log('无法自动生成 whistle 代理规则！', JSON.stringify(this));
             return Promise.reject('无法自动生成 whistle 代理规则！');
         }
 
         let ruleContent = whistleRules.rules;
-
-        // TODO 预留钩子函数来自定义修改代理规则
 
         // 设置开启 Capture TUNNEL CONNECTs，否则 https 情况下可能会有问题
         const shouldEnableCapture = '* enable://capture';
@@ -146,9 +144,9 @@ class PluginWhistle extends BasePlugin {
 
         // 清理 whistle 的端口
         if (this.port) {
-            await utilPort.killPort(this.port)
+            await util.killPort(this.port)
                 .catch((err) => {
-                    console.log(`utilPort.killPort failed`, this.port, err);
+                    console.log(`util.killPort failed`, this.port, err);
                 });
 
             console.log(`already clean whistle port=${this.port}!`);
@@ -171,7 +169,7 @@ class PluginWhistle extends BasePlugin {
         const usedPort = businessLocalCache.getUsedPort();
 
         // 获得可用的端口
-        this.port = await utilPort.findAvailablePort(9528, usedPort);
+        this.port = await util.findAvailablePort(9528, usedPort);
 
         // 缓存在本地
         businessLocalCache.saveUsedPort('whistle', this.port, testRecord);
@@ -186,7 +184,7 @@ class PluginWhistle extends BasePlugin {
      */
     async start(testRecord) {
         // w2 start -S whistle-e2etest -p $w_port
-        const cmd = await runCmd.runBySpawn('w2', ['start', '-S', this._processKey, '-p', this.port]);
+        const cmd = await util.runBySpawn('w2', ['start', '-S', this._processKey, '-p', this.port]);
 
         // 缓存在本地
         businessLocalCache.saveUsedPid('whistle', cmd.pid, testRecord);
@@ -213,7 +211,7 @@ class PluginWhistle extends BasePlugin {
      */
     async use(testRecord) {
         // w2 use xx/.whistle.js -S whistle-e2etest --force
-        await runCmd.runBySpawn('w2', ['use', this.configFile, '-S', this._processKey, '--force']);
+        await util.runBySpawn('w2', ['use', this.configFile, '-S', this._processKey, '--force']);
     }
 
     async getLastUsedWhistlePort() {

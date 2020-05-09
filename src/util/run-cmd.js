@@ -4,7 +4,7 @@ const { spawn, exec } = require('child_process');
  * 使用 spawn 来执行指定的命令
  * @param {String} command
  * @param {Object} args
- * @param {Object} options
+ * @param {Object} [options]
  * @param {Function} [customCloseHandler] 自定义函数来判断是否关闭停止
  * @return {Promise}
  */

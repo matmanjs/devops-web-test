@@ -266,9 +266,87 @@ await this.clean(testRecord);
 
 
 
+### PluginWhistle
 
-- PluginWhistle
-- PluginUnitTest
+mockstar 项目插件。
+
+#### constructor(name, opts)
+
+- `name`，`String`，插件的名字，默认值为 `pluginWhistle`
+- `opts`，`Object`，插件的配置，不同插件可能有不同的区别
+  - `opts.shouldSkip`，`Boolean|Function`，是否应该跳过执行，当为函数时，接受 `testRecord` 参数
+  - `opts.port`，`Number`， whistle 启动端口
+  - `opts.getWhistleRules`，`Function`，获得 whistle 规则，需要返回格式为 `{name: String, rules: String}`
+  - `opts.configFileName`，`String`，whistle 规则配置文件名，文件中包含了规则信息等，默认值为 `test.whistle.js`
+  - `opts.configFile`，`String`，whistle 规则配置文件路径，默认值为 `path.join(testRecord.outputPath, this.configFileName)`
+
+
+#### async init(testRecord)
+
+初始化插件，需要处理的事情包括：
+
+- 将 `configFile` 修改为绝对路径
+- 自动生成唯一标识 `this._processKey`
+
+#### async beforeRun(testRecord)
+
+运行自动化测试之前执行：
+
+```
+await this.clean(testRecord);
+```
+
+#### async run(testRecord)
+
+运行自动化测试，需要处理的事情包括：
+
+```
+// 获取 whistle 的端口号
+await this.findPort(testRecord);
+
+// 生成 .whistle.js 配置文件
+await this.generateConfigFile(testRecord);
+
+// 启动 whislte
+await this.start(testRecord);
+
+// 设置并强制使用指定 whistle 配置规则
+await this.use(testRecord);
+```
+
+#### async afterRun(testRecord)
+
+运行自动化测试之后执行：
+
+```
+await this.clean(testRecord);
+```
+#### async generateConfigFile(testRecord)
+
+根据 `this.getWhistleRules` 获得的代理规则，生成一个本地的 whistle 配置文件。
+
+#### async clean(testRecord)
+
+清理，需要处理的事情包括：
+
+- 清理端口号 `port`，避免该端口号被占用
+
+#### async findPort(testRecord)
+
+获得可用的端口号，并存储在 `this.port` 中
+
+#### async start(testRecord)
+
+启动 whistle，启动命令格式为 `w2 start -S ${this._processKey} -p ${this.port}`。
+
+
+#### async use(testRecord)
+
+使用指定的 whistle 规则配置文件，启动命令格式为 `w2 use ${this.configFile} -S ${this._processKey} --force`。
+
+
+
+
 - PluginE2ETest
 - PluginArchive
 - PluginCustom
