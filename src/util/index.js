@@ -1,5 +1,7 @@
 const path = require('path');
 const axios = require('axios');
+const { findAvailablePort, killPort, portIsOccupied } = require('./port');
+const { runBySpawn, runByExec } = require('./run-cmd');
 
 function getAbsolutePath(basePath, curPath) {
     // 注意：有可能 rootPath 后面携带了一个反斜杠，需要去掉
@@ -74,5 +76,11 @@ module.exports = {
     getAbsolutePath,
     getBase64,
     getFromStrOrFunc,
-    checkAndWaitURLAvailable
+    checkAndWaitURLAvailable,
+    findAvailablePort,
+    killPort,
+    portIsOccupied,
+    runBySpawn,
+    runByExec
 };
+

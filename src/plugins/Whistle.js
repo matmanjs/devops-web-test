@@ -146,9 +146,9 @@ class PluginWhistle extends BasePlugin {
 
         // 清理 whistle 的端口
         if (this.port) {
-            await utilPort.kill(this.port)
+            await utilPort.killPort(this.port)
                 .catch((err) => {
-                    console.log(`utilPort.kill failed`, this.port, err);
+                    console.log(`utilPort.killPort failed`, this.port, err);
                 });
 
             console.log(`already clean whistle port=${this.port}!`);

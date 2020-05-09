@@ -2,8 +2,6 @@ const path = require('path');
 const runCmd = require('../util/run-cmd');
 const util = require('../util');
 
-const fse = require('fs-extra');
-
 const BasePlugin = require('./BasePlugin');
 
 class PluginUnitTest extends BasePlugin {

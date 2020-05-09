@@ -47,5 +47,7 @@ function saveCache(obj, filePath) {
     return fse.outputFileSync(filePath, doc, 'utf-8');
 }
 
-exports.getCache = getCache;
-exports.saveCache = saveCache;
+module.exports = {
+    getCache,
+    saveCache
+};

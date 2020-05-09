@@ -1,5 +1,6 @@
 const testController = require('./test-controller');
 const runCmd = require('./util/run-cmd');
+const util = require('./util');
 
 const BasePlugin = require('./plugins/BasePlugin');
 const PluginProject = require('./plugins/Project');
@@ -13,6 +14,7 @@ const PluginCustom = require('./plugins/Custom');
 module.exports = {
     start: testController.start,
     runCmd,
+    util,
     PluginProject,
     PluginMockstar,
     PluginWhistle,
