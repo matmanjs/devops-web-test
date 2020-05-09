@@ -4,7 +4,7 @@ const TestRecord = require('./TestRecord');
 
 const pkg = require('../package');
 
-async function start(basePath, config, nodejsAtomSdk) {
+async function start(dwtPath, config, nodejsAtomSdk) {
     let testRecord;
     let pluginArr = [];
 
@@ -14,7 +14,7 @@ async function start(basePath, config, nodejsAtomSdk) {
         console.log('\n');
         console.log(`开始执行web自动化测试主流程！基于 ${pkg.name} v${pkg.version}`);
 
-        testRecord = new TestRecord(basePath, config, nodejsAtomSdk);
+        testRecord = new TestRecord(dwtPath, config, nodejsAtomSdk);
 
         // 分析 plugins 之间的依赖关系，进行排序，然后执行
         pluginArr = config.plugins || [];

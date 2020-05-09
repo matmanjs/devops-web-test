@@ -99,7 +99,7 @@ class PluginE2ETest extends BasePlugin {
         await super.init(testRecord);
 
         // 特殊处理下目录，将其修改为绝对路径
-        this.rootPath = util.getAbsolutePath(testRecord.basePath, this.rootPath);
+        this.rootPath = util.getAbsolutePath(testRecord.dwtPath, this.rootPath);
 
         this.outputPath = path.join(testRecord.outputPath, 'e2e_test_report');
         this.coverageOutputPath = path.join(this.outputPath, 'coverage');

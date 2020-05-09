@@ -11,7 +11,8 @@ class PluginProject extends BasePlugin {
         super(name || 'pluginProject', opts);
 
         /**
-         * 项目根路径，由于蓝盾测试项目为 DevOps/devops-app ，因此相对而言项目路径为 ../../
+         * 项目根路径。
+         * 默认值： 由于我们推荐 DWT 路径为 DevOps/devops-app ，因此相对而言项目路径为 ../../
          * @type {String}
          */
         this.rootPath = opts.rootPath || '../../';
@@ -61,7 +62,7 @@ class PluginProject extends BasePlugin {
         await super.init(testRecord);
 
         // 特殊处理下目录，将其修改为绝对路径
-        this.rootPath = util.getAbsolutePath(testRecord.basePath, this.rootPath);
+        this.rootPath = util.getAbsolutePath(testRecord.dwtPath, this.rootPath);
 
         // 进程中追加一些唯一标识
         this._processKey = `project-e2etest-${testRecord.seqId}`;

@@ -3,15 +3,15 @@ const _ = require('lodash');
 const util = require('./util');
 
 class TestRecord {
-    constructor(basePath, config = {}, nodejsAtomSdk) {
+    constructor(dwtPath, config = {}, nodejsAtomSdk) {
         // devops-app 目录的根路径，自动化测试项目根目录
-        this.basePath = util.getAbsolutePath(basePath);
+        this.dwtPath = util.getAbsolutePath(dwtPath);
 
         // 测试产物输出目录
-        this.outputPath = util.getAbsolutePath(this.basePath, config.outputPath || 'output');
+        this.outputPath = util.getAbsolutePath(this.dwtPath, config.outputPath || 'output');
 
         // 工作区间的路径，即项目的根目录，如果是 git 项目，则是 git 仓库的根目录
-        this.workspacePath = util.getAbsolutePath(this.basePath, config.workspacePath || '../../');
+        this.workspacePath = util.getAbsolutePath(this.dwtPath, config.workspacePath || '../../');
 
         // 是否为开发者模式
         this.isDev = !!config.isDev;
@@ -43,7 +43,7 @@ class TestRecord {
         // 自动生成的唯一ID，用于区别不同批次的流程，
         // 尤其是有多个流程在同一个测试机中运行的时候，如果不做区分，则可能会有相互影响
         // 注意不要出现等号，否则whistle里面会有问题
-        this.seqId = this.isDev ? 'dev' : util.getBase64(this.basePath, 6).replace(/=/gi, 'd') + Date.now();
+        this.seqId = this.isDev ? 'dev' : util.getBase64(this.dwtPath, 6).replace(/=/gi, 'd') + Date.now();
 
         // 插件
         this.plugin = {};
@@ -57,7 +57,7 @@ class TestRecord {
             outputRelativePath: path.relative(this.workspacePath, this.outputPath),
 
             // devops-app 相对路径，例如 DevOps/devops-app
-            devopsAppRelativePath: path.relative(this.workspacePath, this.basePath)
+            devopsAppRelativePath: path.relative(this.workspacePath, this.dwtPath)
         };
 
         this._startTime = Date.now();

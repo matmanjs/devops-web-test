@@ -19,22 +19,25 @@
 
 ## 接口文档
 
-### start(basePath, config, nodejsAtomSdk)
+### start(dwtPath, config, nodejsAtomSdk)
 
 启动自动化测试。
 
-- `basePath`，`String`，执行自动化测试和输出测试产物的路径，如果插件传入了相对路径，则是相对于该路径而言
+- `dwtPath`，`String`，`DWT`（DevOps for Web Test） 目录，流水线式执行web自动化测试和输出测试产物的路径，，如果插件传入了相对路径，则是相对于该路径而言
 - `config`，`Object`，配置参数
   - `config.workspacePath`，`String`，工作区间的路径，即项目的根目录，如果是 git 项目，则是 git 仓库的根目录
-  - `config.outputPath`，`String`，测试产物输出目录，默认为 `path.join(basePath,'output')`
+  - `config.outputPath`，`String`，测试产物输出目录，默认为 `path.join(dwtPath, 'output')`
   - `config.plugins`，`Array`，插件列表，启动测试之后，会依次执行插件的生命周期事件(`init` - > `beforeRun` - > `run` - > `afterRun`)
 
 ### BasePlugin
 
+插件的基础类，所有的插件需要继承它。启动测试之后，会依次执行插件的生命周期事件(`init` - > `beforeRun` - > `run` - > `afterRun`)。
+
 #### constructor(name, opts)
 
 - `name`，`String`，插件的名字
-- `shouldSkip`，`Boolean|Function`，是否应该跳过执行，当为函数时，接受 `testRecord` 参数
+- `opts`，`Object`，插件的配置，不同插件可能有不同的区别
+  - `opts.shouldSkip`，`Boolean|Function`，是否应该跳过执行，当为函数时，接受 `testRecord` 参数
 
 #### async init(testRecord)
 
@@ -61,8 +64,16 @@
 项目插件。
 
 
+### PluginProject
 
+工程项目插件，即我们原始的工程，自动化测试时，我们可能需要安装依赖和构建等操作。
 
+#### constructor(name, opts)
+
+- `name`，`String`，插件的名字
+- `opts`，`Object`，插件的配置，不同插件可能有不同的区别
+  - `opts.shouldSkip`，`Boolean|Function`，是否应该跳过执行，当为函数时，接受 `testRecord` 参数
+  - `opts.rootPath`，`String`，项目根路径，默认值：由于我们推荐 `DWT` 路径为 `DevOps/devops-app` ，因此相对而言项目路径为 `../../`
 
 
 - runCmd

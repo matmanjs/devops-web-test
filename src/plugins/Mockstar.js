@@ -39,7 +39,7 @@ class PluginMockstar extends BasePlugin {
         await super.init(testRecord);
 
         // 特殊处理下目录，将其修改为绝对路径
-        this.rootPath = util.getAbsolutePath(testRecord.basePath, this.rootPath);
+        this.rootPath = util.getAbsolutePath(testRecord.dwtPath, this.rootPath);
 
         // 进程中追加一些唯一标识
         this._processKey = `mockstar-e2etest-${testRecord.seqId}`;

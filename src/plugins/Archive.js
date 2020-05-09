@@ -291,7 +291,7 @@ class PluginArchive extends BasePlugin {
 
     async compressDir(testRecord) {
         const source = this.rootPath;
-        const tmpDest = path.join(testRecord.basePath, path.basename(this.outputZipPath));
+        const tmpDest = path.join(testRecord.dwtPath, path.basename(this.outputZipPath));
         const dest = this.outputZipPath;
         console.log(dest);
 
