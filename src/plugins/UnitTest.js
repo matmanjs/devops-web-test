@@ -8,6 +8,13 @@ class PluginUnitTest extends BasePlugin {
         super(name || 'pluginUnitTest', opts);
 
         /**
+         * 是否启动测试，默认情况下为 true
+         *
+         * @type {Boolean}
+         */
+        this.enableTest = (typeof opts.enableTest === 'boolean') ? opts.enableTest : true;
+
+        /**
          * 执行单元测试的根路径
          * 默认值： 由于我们推荐 DWT 路径为 DevOps/devops-app ，因此相对而言项目路径为 ../../
          *
@@ -105,6 +112,14 @@ class PluginUnitTest extends BasePlugin {
 
         console.log('\n');
         console.log('ready to runTest for unit test ...');
+
+        // 如果不需要执行单元测试，则直接返回了
+        if (!this.enableTest) {
+            console.log('ignore unit test because this.enableTest is false!');
+            console.log('\n');
+
+            return;
+        }
 
         // 在运行测试之前执行的钩子函数
         if (typeof this.onBeforeTest === 'function') {

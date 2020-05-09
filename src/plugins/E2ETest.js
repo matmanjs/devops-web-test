@@ -14,8 +14,9 @@ class PluginE2ETest extends BasePlugin {
         super(name || 'pluginE2ETest', opts);
 
         /**
-         * 是否启动测试
-         * @type {boolean}
+         * 是否启动测试，默认情况下为 true
+         *
+         * @type {Boolean}
          */
         this.enableTest = (typeof opts.enableTest === 'boolean') ? opts.enableTest : true;
 
