@@ -8,19 +8,12 @@ class PluginUnitTest extends BasePlugin {
         super(name || 'pluginUnitTest', opts);
 
         /**
-         * 是否启动测试，默认情况下为 true
-         *
-         * @type {Boolean}
-         */
-        this.enableTest = (typeof opts.enableTest === 'boolean') ? opts.enableTest : true;
-
-        /**
          * 执行单元测试的根路径
          * 默认值： 由于我们推荐 DWT 路径为 DevOps/devops-app ，因此相对而言项目路径为 ../../
          *
          * @type {String}
          */
-        this.rootPath = opts.rootPath || '../../';
+        this.runTestPath = opts.runTestPath || '../../';
 
         /**
          * 单元测试结果输出的路径
@@ -83,7 +76,7 @@ class PluginUnitTest extends BasePlugin {
         await super.init(testRecord);
 
         // 特殊处理下目录，将其修改为绝对路径
-        this.rootPath = util.getAbsolutePath(testRecord.dwtPath, this.rootPath);
+        this.runTestPath = util.getAbsolutePath(testRecord.dwtPath, this.runTestPath);
 
         this.outputPath = path.join(testRecord.outputPath, 'unit_test_report');
         this.coverageOutputPath = path.join(this.outputPath, 'coverage');
@@ -112,14 +105,6 @@ class PluginUnitTest extends BasePlugin {
 
         console.log('\n');
         console.log('ready to runTest for unit test ...');
-
-        // 如果不需要执行单元测试，则直接返回了
-        if (!this.enableTest) {
-            console.log('ignore unit test because this.enableTest is false!');
-            console.log('\n');
-
-            return;
-        }
 
         // 在运行测试之前执行的钩子函数
         if (typeof this.onBeforeTest === 'function') {
@@ -162,7 +147,7 @@ class PluginUnitTest extends BasePlugin {
         // 获得测试命令
         const command = util.getFromStrOrFunc(this.testCmd, testRecord);
 
-        await util.runByExec(command, { cwd: this.rootPath }, this.testCompleteCheck.bind(this));
+        await util.runByExec(command, { cwd: this.runTestPath }, this.testCompleteCheck.bind(this));
 
         this._cacheTestCmd = command;
     }
@@ -181,7 +166,7 @@ class PluginUnitTest extends BasePlugin {
 
         this._cacheCoverageCmd = command;
 
-        await util.runByExec(command, { cwd: this.rootPath });
+        await util.runByExec(command, { cwd: this.runTestPath });
 
         // 检查文件已经存在才算结束
         // 2020.3.13 发现命令执行完成时，coverage 文件夹可能还没有来的及生成

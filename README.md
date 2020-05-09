@@ -141,13 +141,13 @@ await this.clean(testRecord);
 - `name`，`String`，插件的名字，默认值为 `pluginUnitTest`
 - `opts`，`Object`，插件的配置，不同插件可能有不同的区别
   - `opts.shouldSkip`，`Boolean|Function`，是否应该跳过执行，当为函数时，接受 `testRecord` 参数
-  - `opts.rootPath`，`String`，执行单元测试的根路径，默认值：由于我们推荐 `DWT` 路径为 `DevOps/devops-app` ，因此默认值为 `path.join(dwtPath, '../../')`
+  - `opts.runTestPath`，`String`，执行单元测试的根路径，默认值：由于我们推荐 `DWT` 路径为 `DevOps/devops-app` ，因此默认值为 `path.join(dwtPath, '../../')`
   - `opts.outputPath`，`String`，单元测试结果输出的路径，默认值：`path.join(testRecord.outputPath, 'unit_test_report')` 
   - `opts.coverageOutputPath`，`String`，单元测试的覆盖率输出的路径，推荐放在单元测试结果输出文件夹内，默认值：`path.join(this.outputPath, 'coverage')` 
   - `opts.testCmd`，`String|Function`，执行测试的命令，当其为函数时，会传入参数 `testRecorder`，默认值为 `function (testRecord) { return 'npm test'; }`
   - `opts.coverageCmd`，`String|Function`，执行测试的命令，当其为函数时，会传入参数 `testRecorder` 和 `testCmdToExecute`(实际执行的测试的命令)，默认值为 `function (testRecord, testCmdToExecute) { return 'npm run coverage'; }`
   - `opts.onBeforeTest`，`Function`，在运行测试之前执行的钩子函数，会传入参数 `testRecorder` 和 `util`
-  - `opts.testCompleteCheck`，`Function`，检查构建是否完成，会传入参数 `data` ，代表的时控制台输出，在某些场景下，可以通过判断某些输出，来判断构建已经结束，如果返回 `true`，则将强制结束构建，默认值为 `function (data) { return false; }`
+  - `opts.testCompleteCheck`，`Function`，检查测试过程是否完成，会传入参数 `data` ，代表的时控制台输出，在某些场景下，可以通过判断某些输出，来判断构建已经结束，如果返回 `true`，则将强制结束构建，默认值为 `function (data) { return false; }`
   - `opts.coverageCompleteCheck`，`Function`，检查覆盖率是否完成，会传入参数 `testRecorder` ，由于生成覆盖率文件是异步的，某些时候需要实际去检查所需要的覆盖率文件是否实际已经完成，此时可以用该方法
 
 
@@ -155,7 +155,7 @@ await this.clean(testRecord);
 
 初始化插件，需要处理的事情包括：
 
-- 将 `rootPath` 修改为绝对路径
+- 将 `runTestPath` 修改为绝对路径
 - 将 `outputPath` 修改为绝对路径
 - 将 `coverageOutputPath` 修改为绝对路径
 
@@ -345,9 +345,106 @@ await this.clean(testRecord);
 使用指定的 whistle 规则配置文件，启动命令格式为 `w2 use ${this.configFile} -S ${this._processKey} --force`。
 
 
+### PluginE2ETest
+
+单元测试项目插件。
+
+#### constructor(name, opts)
+
+- `name`，`String`，插件的名字，默认值为 `pluginUnitTest`
+- `opts`，`Object`，插件的配置，不同插件可能有不同的区别
+  - `opts.shouldSkip`，`Boolean|Function`，是否应该跳过执行，当为函数时，接受 `testRecord` 参数
+  - `opts.runTestPath`，`String`，执行端对端测试的根路径，默认值：由于我们推荐 `DWT` 路径为 `DevOps/devops-app` ，因此默认值为 `path.join(dwtPath, '../../')`
+  - `opts.outputPath`，`String`，单元测试结果输出的路径，默认值：`path.join(testRecord.outputPath, 'e2e_test_report')` 
+  - `opts.coverageOutputPath`，`String`，单元测试的覆盖率输出的路径，推荐放在单元测试结果输出文件夹内，默认值：`path.join(this.outputPath, 'coverage')` 
+  - `opts.testCmd`，`String|Function`，执行测试的命令，当其为函数时，会传入参数 `testRecorder` 和 `whistlePort`，默认值为 `function (testRecord, whistlePort) { return 'npm test'; }`
+  - `opts.onBeforeTest`，`Function`，在运行测试之前执行的钩子函数，会传入参数 `testRecorder` 和 `util`
+  - `opts.testCompleteCheck`，`Function`，检查测试过程是否完成，会传入参数 `data` ，代表的时控制台输出，在某些场景下，可以通过判断某些输出，来判断构建已经结束，如果返回 `true`，则将强制结束构建，默认值为 `function (data) { return false; }`
+  - `opts.getWhistlePort`，`Function`，获得 `whistle` 的端口号，默认值为 `function (testRecord) { return 0; }`
+  - `opts.matmanAppPath`，`String`，matman 应用的根路径，默认值：由于我们推荐 `DWT` 路径为 `DevOps/devops-app` ，因此默认值为 `path.join(dwtPath, '../matman')`
+  - `opts.matmanAppInstallCmd`，`String|Function`，matman 应用安装依赖时执行的命令，当其为函数时，会传入参数 `testRecorder`，默认值为 `function (testRecord) { return 'npm install'; }`
+  - `opts.matmanAppBuildCmd`，`String|Function`，matman 应用构建项目时执行的命令，当其为函数时，会传入参数 `testRecorder` ，默认值为 `function (testRecord,) { return 'npm run build'; }`
+
+#### async init(testRecord)
+
+初始化插件，需要处理的事情包括：
+
+- 将 `runTestPath` 修改为绝对路径
+- 将 `matmanAppPath` 修改为绝对路径
+- 将 `outputPath` 修改为绝对路径
+- 将 `coverageOutputPath` 修改为绝对路径
+
+#### async beforeRun(testRecord)
+
+运行自动化测试之前执行，暂无。
+
+#### async run(testRecord)
+
+运行自动化测试，需要处理的事情包括：
+
+```
+// matman-app 安装依赖
+await this.matmanAppInstall(testRecord);
+
+// 测试之前需要 matman-app 构建
+await this.matmanAppBuild(testRecord);
+
+// 启用 xvfb
+await this.startXvfb(testRecord);
+
+// 在运行测试之前执行的钩子函数
+if (typeof this.onBeforeTest === 'function') {
+    await Promise.resolve(this.onBeforeTest.call(this, testRecord, runCmd));
+}
+
+// 启动测试
+await this.runTest(testRecord);
+
+// 停止 xvfb
+await this.stopXvfb(testRecord);
+
+// 处理测试覆盖率
+await this.createE2ECoverage(testRecord);
+
+// copy build to output
+await this.copyBuildOutputToArchive(testRecord);
+```
+
+#### async afterRun(testRecord)
+
+运行自动化测试之后执行，暂无。
+
+#### async startXvfb(testRecord)
+
+启动 xvfb，注意只有在 `process.env.USE_XVFB` 存在时才会处理
+
+#### async stopXvfb(testRecord)
+
+关闭 xvfb，注意只有在 `process.env.USE_XVFB` 存在时才会处理
+
+#### async matmanAppInstall(testRecord)
+
+启动 matman-app 的安装依赖，执行 `this.matmanAppInstallCmd` 命令
+
+#### async matmanAppBuild(testRecord)
+
+启动 matman-app 的构建，执行 `this.matmanAppBuildCmd` 命令
+
+#### async runTest(testRecord)
+
+启动测试，执行 `this.testCmd` 命令
+
+#### async createE2ECoverage(testRecord)
+
+分析并生成测试覆盖率数据
+
+#### async copyBuildOutputToArchive(testRecord)
+
+将端对端测试运行结果拷贝到归档目录中
 
 
-- PluginE2ETest
+
+
 - PluginArchive
 - PluginCustom
 - BasePlugin
