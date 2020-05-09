@@ -347,11 +347,11 @@ await this.clean(testRecord);
 
 ### PluginE2ETest
 
-单元测试项目插件。
+端对端测试项目插件。
 
 #### constructor(name, opts)
 
-- `name`，`String`，插件的名字，默认值为 `pluginUnitTest`
+- `name`，`String`，插件的名字，默认值为 `pluginE2ETest`
 - `opts`，`Object`，插件的配置，不同插件可能有不同的区别
   - `opts.shouldSkip`，`Boolean|Function`，是否应该跳过执行，当为函数时，接受 `testRecord` 参数
   - `opts.runTestPath`，`String`，执行端对端测试的根路径，默认值：由于我们推荐 `DWT` 路径为 `DevOps/devops-app` ，因此默认值为 `path.join(dwtPath, '../../')`
@@ -443,8 +443,123 @@ await this.copyBuildOutputToArchive(testRecord);
 将端对端测试运行结果拷贝到归档目录中
 
 
+### PluginArchive
+
+归档项目插件。
+
+#### constructor(name, opts)
+
+- `name`，`String`，插件的名字，默认值为 `pluginArchive`
+- `opts`，`Object`，插件的配置，不同插件可能有不同的区别
+  - `opts.shouldSkip`，`Boolean|Function`，是否应该跳过执行，当为函数时，接受 `testRecord` 参数
+  - `opts.getPlugins`，`Function`，获取插件，接受 `testRecord` 参数, 返回 `{ pluginE2ETest: PluginE2ETest, pluginUnitTest: PluginUnitTest, pluginWhistle: PluginWhistle}`
+  
+
+其他的属性：
+
+- `this.rootPath`，`String`，归档文件夹路径，值为 `testRecord.outputPath`
+- `this.outputZipPath`，`String`，归档文件夹路径，值为 `path.join(this.rootPath, 'output.zip')`
+- `this.indexHtmlPath`，`String`，归档文件夹路径，值为 `path.join(this.rootPath, 'index.html')`
+- `this.indexHtmlDataPath`，`String`，归档文件夹路径，值为 `path.join(this.rootPath, 'index-html.json')`
+- `this.testRecordPath`，`String`，归档文件夹路径，值为 `path.join(this.rootPath, 'test-record.json')`
+
+#### async init(testRecord)
+
+初始化插件，需要处理的事情包括：
+
+- 将 `rootPath` 修改为绝对路径
+- 将 `outputZipPath` 修改为绝对路径
+- 将 `indexHtmlPath` 修改为绝对路径
+- 将 `indexHtmlDataPath` 修改为绝对路径
+- 将 `testRecordPath` 修改为绝对路径
+
+#### async beforeRun(testRecord)
+
+运行自动化测试之前执行：
+           
+```
+await this.clean(testRecord);
+```
+
+#### async run(testRecord)
+
+运行自动化测试，需要处理的事情包括：
+
+```
+// 保存自定义报告入口文件
+this.saveOutputIndexHtml(testRecord, pluginMap);
+
+// 保存 testRecord 内容
+this.saveTestRecordContent(testRecord);
+
+// 压缩下 output 目录
+await this.compressDir(testRecord);
+```
+
+#### async afterRun(testRecord)
+
+运行自动化测试之后执行：
+           
+```
+await this.clean(testRecord);
+```
+
+#### async clean(testRecord)
+
+清理，需要处理的事情包括：
+
+- 删除上次缓存的文件内容，即清空 `this.rootPath` 目录
 
 
-- PluginArchive
-- PluginCustom
-- BasePlugin
+#### getE2ETestReport(testRecord, pluginE2ETest)
+
+获得端对端测试报告
+
+#### getUnitTestReport(testRecord, pluginUnitTest)
+
+获得单元测试报告
+
+#### saveOutputIndexHtml(testRecord, pluginMap) 
+
+保存自定义报告入口文件
+
+
+#### async saveTestRecordContent(testRecord)
+
+保存 testRecord 内容
+
+#### async compressDir(testRecord)
+
+压缩保存测试输出文件
+
+
+
+### PluginCustom
+
+自定义插件。
+
+#### constructor(name, opts)
+
+- `name`，`String`，插件的名字，默认值为 `pluginCustom`
+- `opts`，`Object`，插件的配置，不同插件可能有不同的区别
+  - `opts.shouldSkip`，`Boolean|Function`，是否应该跳过执行，当为函数时，接受 `testRecord` 参数
+  - `opts.onInit`，`Function`，`init` 方法中的钩子函数，接受 `testRecord` 参数
+  - `opts.onBeforeRun`，`Function`，`beforeRun` 方法中的钩子函数，接受 `testRecord` 参数
+  - `opts.onRun`，`Function`，`run` 方法中的钩子函数，接受 `testRecord` 参数
+  - `opts.onAfterRun`，`Function`，`afterRun` 方法中的钩子函数，接受 `testRecord` 参数
+
+#### async init(testRecord)
+
+初始化插件，调用 `this.onInit`
+
+#### async beforeRun(testRecord)
+
+运行自动化测试之前执行，调用 `this.onBeforeRun`
+
+#### async run(testRecord)
+
+运行自动化测试，调用 `this.onRun`
+
+#### async afterRun(testRecord)
+
+运行自动化测试之后执行，调用 `this.onAfterRun`

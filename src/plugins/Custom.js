@@ -2,7 +2,7 @@ const BasePlugin = require('./BasePlugin');
 
 class PluginCustom extends BasePlugin {
     constructor(name, opts = {}) {
-        super(name || 'PluginCustom', opts);
+        super(name || 'pluginCustom', opts);
 
         this.onInit = opts.onInit;
         this.onBeforeRun = opts.onBeforeRun;

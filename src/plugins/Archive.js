@@ -120,7 +120,7 @@ class PluginArchive extends BasePlugin {
             unionResult: unionTestReport
         });
 
-        // 保存在蓝盾系统中自定义报告入口文件
+        // 保存自定义报告入口文件
         this.saveOutputIndexHtml(testRecord, pluginMap);
 
         // 保存 testRecord 内容
@@ -175,7 +175,7 @@ class PluginArchive extends BasePlugin {
     }
 
     /**
-     * 保存在蓝盾系统中自定义报告入口文件
+     * 保存自定义报告入口文件
      * @param {Object} testRecord
      */
     saveOutputIndexHtml(testRecord, pluginMap) {
