@@ -8,7 +8,7 @@ class PluginUnitTest extends BasePlugin {
         super(name || 'pluginUnitTest', opts);
 
         /**
-         * 单元根路径
+         * 执行单元测试的根路径
          * 默认值： 由于我们推荐 DWT 路径为 DevOps/devops-app ，因此相对而言项目路径为 ../../
          *
          * @type {String}

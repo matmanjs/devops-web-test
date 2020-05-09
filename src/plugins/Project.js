@@ -42,11 +42,11 @@ class PluginProject extends BasePlugin {
         };
 
         /**
-         * 构建项目时执行的命令，当其为函数时，会传入参数 port 和 testRecorder
+         * 构建项目时执行的命令，当其为函数时，会传入参数 testRecorder 和 port
          *
          * @type {String|Function}
          */
-        this.buildCmd = opts.buildCmd || function (port, testRecord) {
+        this.buildCmd = opts.buildCmd || function (testRecord, port) {
             return 'npm start';
         };
 
@@ -147,7 +147,7 @@ class PluginProject extends BasePlugin {
             this.buildCmd = this.buildCmd.bind(this);
         }
 
-        const cmd = util.getFromStrOrFunc(this.buildCmd, this.port, testRecord);
+        const cmd = util.getFromStrOrFunc(this.buildCmd, testRecord, this.port);
 
         const command = `${cmd} --${this._processKey}`;
 
