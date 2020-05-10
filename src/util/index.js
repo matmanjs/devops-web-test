@@ -1,5 +1,6 @@
 const path = require('path');
 const axios = require('axios');
+const fse = require('fs-extra');
 const { findAvailablePort, killPort, portIsOccupied } = require('./port');
 const { runBySpawn, runByExec } = require('./run-cmd');
 
@@ -72,10 +73,60 @@ async function checkAndWaitURLAvailable(url, opts = {}) {
     }
 }
 
+/**
+ * 检查某个文件是否存在，一直到能够查到或者超时为止
+ *
+ * @param {String} checkFile 本地文件
+ * @param {Object} [opts] 选项
+ * @param {Number} [opts.retryLimit] 最多重试次数
+ * @param {Number} [opts.count] 当前重试次数
+ * @param {Number} [opts.timeout] 每次重试之后需要等待的时间，单位为ms
+ * @return {Promise<Boolean>}
+ */
+async function checkAndWaitFileAvailable(checkFile, opts = {}) {
+    if (!opts.count) {
+        opts.count = 0;
+    }
+    if (!opts.retryLimit) {
+        opts.retryLimit = 10;
+    }
+    if (!opts.timeout) {
+        opts.timeout = 1000;
+    }
+
+    const result = await fse.pathExists(checkFile);
+
+    if (result) {
+        console.log(`checkAndWaitFileAvailable return true!`, checkFile, opts);
+        return true;
+    } else if (opts.count >= opts.retryLimit) {
+        console.log(`retry max! ${opts.count}/${opts.retryLimit}`);
+        return Promise.reject(new Error('retry max'));
+    } else {
+        opts.count++;
+
+        console.log(`check again: ${opts.count}/${opts.retryLimit}, waiting ${opts.timeout}ms`);
+
+        return new Promise((resolve, reject) => {
+            setTimeout(async () => {
+
+                checkAndWaitFileAvailable(checkFile, opts)
+                    .then((data) => {
+                        resolve(data);
+                    })
+                    .catch((err) => {
+                        reject(err);
+                    });
+            }, opts.timeout);
+        });
+    }
+}
+
 module.exports = {
     getAbsolutePath,
     getBase64,
     getFromStrOrFunc,
+    checkAndWaitFileAvailable,
     checkAndWaitURLAvailable,
     findAvailablePort,
     killPort,
@@ -83,4 +134,3 @@ module.exports = {
     runBySpawn,
     runByExec
 };
-
