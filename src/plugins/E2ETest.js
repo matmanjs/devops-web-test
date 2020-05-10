@@ -35,8 +35,8 @@ class PluginE2ETest extends BasePlugin {
          * 执行测试的命令
          * @type {String|Function}
          */
-        this.testCmd = opts.testCmd || function (testRecord, whistlePort) {
-            return 'npm test';
+        this.testCmd = opts.testCmd || function (testRecord) {
+            return 'npm run test:e2e';
         };
 
         /**
@@ -55,19 +55,11 @@ class PluginE2ETest extends BasePlugin {
         });
 
         /**
-         * 获得 whistle 规则
-         * @type {Function}
-         */
-        this.getWhistlePort = (typeof opts.getWhistlePort === 'function' ? opts.getWhistlePort : function (testRecord) {
-            return 0;
-        });
-
-        /**
          * matman 应用的根路径
-         * 默认值： 由于我们推荐 DWT 路径为 DevOps/devops-app ，因此相对而言项目路径为 ../matman
+         * 默认值： 由于我们推荐 DWT 路径为 DevOps/devops-app ，因此相对而言项目路径为 ../matman-app
          * @type {String}
          */
-        this.matmanAppPath = opts.matmanAppPath || '../matman';
+        this.matmanAppPath = opts.matmanAppPath || '../matman-app';
 
         /**
          * matman 应用安装依赖时执行的命令，当其为函数时，会传入参数 testRecorder

@@ -37,7 +37,7 @@ class PluginMockstar extends BasePlugin {
          * @type {String|Function}
          */
         this.startCmd = opts.startCmd || function (testRecord, port) {
-            return 'npm start';
+            return `mockstar run -p ${port}`;
         };
     }
 

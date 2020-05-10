@@ -35,7 +35,7 @@ class PluginUnitTest extends BasePlugin {
          * @type {String|Function}
          */
         this.testCmd = opts.testCmd || function (testRecord) {
-            return 'npm test';
+            return 'npm run test:unit';
         };
 
         /**
@@ -162,7 +162,7 @@ class PluginUnitTest extends BasePlugin {
             this.coverageCmd = this.coverageCmd.bind(this);
         }
 
-        const command = util.getFromStrOrFunc(this.coverageCmd, this._cacheTestCmd, testRecord);
+        const command = util.getFromStrOrFunc(this.coverageCmd, testRecord, this._cacheTestCmd);
 
         this._cacheCoverageCmd = command;
 
