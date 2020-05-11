@@ -80,12 +80,6 @@ class PluginUnitTest extends BasePlugin {
 
         this.outputPath = path.join(testRecord.outputPath, 'unit_test_report');
         this.coverageOutputPath = path.join(this.outputPath, 'coverage');
-
-        // TODO 需要移除
-        testRecord.addTestCustomParams({
-            unitTestRelativePathToOutput: path.relative(testRecord.outputPath, this.outputPath),
-            unitTestCoverageRelativePathToOutput: path.relative(testRecord.outputPath, this.coverageOutputPath)
-        });
     }
 
     /**
@@ -116,11 +110,6 @@ class PluginUnitTest extends BasePlugin {
 
         // 获取单元测试覆盖率
         await this.runCoverage(testRecord);
-
-        // 追加结果到蓝盾变量中
-        testRecord.addTestCustomParams({
-            shouldRunUnitTest: this.shouldRun(testRecord)
-        });
 
         console.log('runTest for unit test finished!');
         console.log('\n');
@@ -173,6 +162,14 @@ class PluginUnitTest extends BasePlugin {
         if (typeof this.coverageCompleteCheck === 'function') {
             await Promise.resolve(this.coverageCompleteCheck.call(this, testRecord));
         }
+    }
+
+    /**
+     * 设置测试结果报告
+     * @param testResultReport
+     */
+    setTestResultReport(testResultReport) {
+        this.testResultReport = testResultReport;
     }
 }
 

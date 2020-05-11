@@ -93,11 +93,6 @@ class PluginE2ETest extends BasePlugin {
 
         this.outputPath = path.join(testRecord.outputPath, 'e2e_test_report');
         this.coverageOutputPath = path.join(this.outputPath, 'coverage');
-
-        testRecord.addTestCustomParams({
-            e2eTestRelativePathToOutput: path.relative(testRecord.outputPath, this.outputPath),
-            e2eTestCoverageRelativePathToOutput: path.relative(testRecord.outputPath, this.coverageOutputPath)
-        });
     }
 
     /**
@@ -144,11 +139,6 @@ class PluginE2ETest extends BasePlugin {
         // copy build to output
         await this.copyBuildOutputToArchive(testRecord);
 
-        // 追加结果到蓝盾变量中
-        testRecord.addTestCustomParams({
-            shouldRunE2ETest: this.shouldRun(testRecord)
-        });
-
         console.log('runTest for e2e test finished!');
         console.log('\n');
     }
@@ -181,7 +171,7 @@ class PluginE2ETest extends BasePlugin {
         // });
 
         // https://www.npmjs.com/package/xvfb
-        // 2020.3.12 保持默认值就可以了，不需要额外配置 xvfb_args 参数，否则在蓝盾里面运行会报错如下错误：
+        // 2020.3.12 保持默认值就可以了，不需要额外配置 xvfb_args 参数，否则可能会报错如下错误：
         // nightmare electron child process exited with code 1: general error - you may need xvfb
         const xvfb = new Xvfb({
             // timeout: 2000,
@@ -331,6 +321,13 @@ class PluginE2ETest extends BasePlugin {
         }
     }
 
+    /**
+     * 设置测试结果报告
+     * @param testResultReport
+     */
+    setTestResultReport(testResultReport) {
+        this.testResultReport = testResultReport;
+    }
 }
 
 module.exports = PluginE2ETest;
