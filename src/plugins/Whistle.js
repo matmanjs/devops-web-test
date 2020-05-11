@@ -1,5 +1,6 @@
 const path = require('path');
 const fse = require('fs-extra');
+const { exec } = require('child_process');
 
 const util = require('../util');
 
@@ -20,7 +21,16 @@ class PluginWhistle extends BasePlugin {
         this.port = opts.port || 0;
 
         /**
-         * 获得 whistle 规则
+         * 是否应该重复使用已存在的 whistle 进程，
+         * 如果已经有启动的 whistle，则复用之
+         * 如果没有启动的 whistle，则启动之后不清理
+         *
+         * @type {Boolean}
+         */
+        this.shouldReuse = !!opts.shouldReuse;
+
+        /**
+         * 获得 whistle 规则，返回值的格式为 {name: String, rules: String}
          *
          * @type {Function}
          */
@@ -37,6 +47,14 @@ class PluginWhistle extends BasePlugin {
          * @type {String}
          */
         this.configFileName = 'test.whistle.js';
+
+        /**
+         * 不需要清理和重启 whistle
+         *
+         * @type {Boolean}
+         * @private
+         */
+        this._shouldNotCleanAndStartWhistle = false;
     }
 
     /**
@@ -49,6 +67,18 @@ class PluginWhistle extends BasePlugin {
         // whistle 配置文件路径，自动生成，一般情况下无需修改
         this.configFile = path.join(testRecord.outputPath, this.configFileName);
 
+        // 如果是复用的情况下，查一下现在是不是有 whistle 启动了
+        if (this.shouldReuse) {
+            const startedWhistlePort = await checkIfWhistleStarted().catch(() => {
+            });
+
+            // 如果已经启动的 whistle 端口就是传入的指定端口，则不需要清理端口和重启 whistle
+            if (startedWhistlePort && (startedWhistlePort === this.port)) {
+                this._shouldNotCleanAndStartWhistle = true;
+                this.port = startedWhistlePort;
+            }
+        }
+
         // 进程中追加一些唯一标识
         this._processKey = `whistle-e2etest-${testRecord.seqId}`;
     }
@@ -60,7 +90,9 @@ class PluginWhistle extends BasePlugin {
     async beforeRun(testRecord) {
         await super.beforeRun(testRecord);
 
-        await this.clean(testRecord);
+        if (!this._shouldNotCleanAndStartWhistle) {
+            await this.clean(testRecord);
+        }
     }
 
     /**
@@ -96,7 +128,10 @@ class PluginWhistle extends BasePlugin {
     async afterRun(testRecord) {
         await super.afterRun(testRecord);
 
-        await this.clean(testRecord);
+        // 如果是不复用 whistle 的场景，用完则需要清理
+        if (!this.shouldReuse) {
+            await this.clean(testRecord);
+        }
     }
 
     /**
@@ -183,6 +218,11 @@ class PluginWhistle extends BasePlugin {
      * @param testRecord
      */
     async start(testRecord) {
+        if (this._shouldNotCleanAndStartWhistle) {
+            console.log('this._shouldNotCleanAndStartWhistle is true!', this.port);
+            return;
+        }
+
         // w2 start -S whistle-e2etest -p $w_port
         const cmd = await util.runBySpawn('w2', ['start', '-S', this._processKey, '-p', this.port]);
 
@@ -241,6 +281,23 @@ class PluginWhistle extends BasePlugin {
                 return Promise.resolve();
             });
     }
+}
+
+function checkIfWhistleStarted() {
+    return new Promise((resolve, reject) => {
+        exec('w2 status', function (error, stdout, stderr) {
+            if (error) {
+                return reject(error);
+            }
+
+            const matchResult = stdout.match(/127\.0\.0\.1:([0-9]+)\//i);
+            if (matchResult && matchResult[1]) {
+                resolve(matchResult[1]);
+            } else {
+                reject(stdout);
+            }
+        });
+    });
 }
 
 module.exports = PluginWhistle;

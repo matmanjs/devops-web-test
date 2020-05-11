@@ -183,8 +183,6 @@ class PluginMockstar extends BasePlugin {
             return data && data.indexOf(`127.0.0.1:${this.port}`) > -1;
         });
 
-        console.log('======mockstar start cmdRun.pid=====', cmdRun.pid);
-
         // 缓存在本地
         businessLocalCache.saveUsedPid('mockstar', cmdRun.pid, testRecord);
 
