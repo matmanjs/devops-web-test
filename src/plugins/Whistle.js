@@ -49,12 +49,14 @@ class PluginWhistle extends BasePlugin {
         this.configFileName = 'test.whistle.js';
 
         /**
-         * 不需要清理和重启 whistle
+         * 直接使用当前已经启动的 whistle，不需要清理和重启 whistle
          *
          * @type {Boolean}
          * @private
          */
-        this._shouldNotCleanAndStartWhistle = false;
+        this._useCurrentStartedWhistle = false;
+
+        this._forceOverride = true;
     }
 
     /**
@@ -69,13 +71,17 @@ class PluginWhistle extends BasePlugin {
 
         // 如果是复用的情况下，查一下现在是不是有 whistle 启动了
         if (this.shouldReuse) {
-            const startedWhistlePort = await checkIfWhistleStarted().catch(() => {
-            });
+            try {
+                const startedWhistlePort = await checkIfWhistleStarted();
+                console.log('[exist whistle]', startedWhistlePort);
 
-            // 如果已经启动的 whistle 端口就是传入的指定端口，则不需要清理端口和重启 whistle
-            if (startedWhistlePort && (startedWhistlePort === this.port)) {
-                this._shouldNotCleanAndStartWhistle = true;
-                this.port = startedWhistlePort;
+                // 如果已经启动的 whistle 端口就是传入的指定端口，则不需要清理端口和重启 whistle
+                if (startedWhistlePort && (startedWhistlePort === this.port)) {
+                    this._useCurrentStartedWhistle = true;
+                    this.port = startedWhistlePort;
+                }
+            } catch (e) {
+
             }
         }
 
@@ -90,7 +96,7 @@ class PluginWhistle extends BasePlugin {
     async beforeRun(testRecord) {
         await super.beforeRun(testRecord);
 
-        if (!this._shouldNotCleanAndStartWhistle) {
+        if (!this._useCurrentStartedWhistle) {
             await this.clean(testRecord);
         }
     }
@@ -218,8 +224,8 @@ class PluginWhistle extends BasePlugin {
      * @param testRecord
      */
     async start(testRecord) {
-        if (this._shouldNotCleanAndStartWhistle) {
-            console.log('this._shouldNotCleanAndStartWhistle is true!', this.port);
+        if (this._useCurrentStartedWhistle) {
+            console.log('this._useCurrentStartedWhistle is true!', this.port);
             return;
         }
 
@@ -251,7 +257,17 @@ class PluginWhistle extends BasePlugin {
      */
     async use(testRecord) {
         // w2 use xx/.whistle.js -S whistle-e2etest --force
-        await util.runBySpawn('w2', ['use', this.configFile, '-S', this._processKey, '--force']);
+        let cmd = `w2 use ${this.configFile}`;
+
+        if (!this._useCurrentStartedWhistle) {
+            cmd = `${cmd} -S ${this._processKey}`;
+        }
+
+        if (this._forceOverride) {
+            cmd = `${cmd} --force`;
+        }
+
+        await util.runByExec(cmd);
     }
 
     async getLastUsedWhistlePort() {
