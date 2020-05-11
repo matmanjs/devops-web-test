@@ -292,9 +292,11 @@ class PluginE2ETest extends BasePlugin {
             dir: reporterDir
         })
             .then((data) => {
+                this.isExistCoverageReport = true;
                 console.log('生成端对端自动化测试报告成功！', data);
             })
             .catch((err) => {
+                this.isExistCoverageReport = false;
                 console.error('生成端对端自动化测试报告失败！', err && err.message || err);
             });
     }

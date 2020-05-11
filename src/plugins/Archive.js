@@ -203,6 +203,7 @@ class PluginArchive extends BasePlugin {
             },
             e2eTestCoverage: {
                 shouldRun: pluginMap.pluginE2ETest.shouldRun(testRecord),
+                isExist: pluginMap.pluginE2ETest.isExistCoverageReport,
                 outputUrl: `${path.relative(testRecord.outputPath, pluginMap.pluginE2ETest.coverageOutputPath)}/index.html`
             },
             unitTest: {
