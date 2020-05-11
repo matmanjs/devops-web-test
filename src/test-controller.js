@@ -22,8 +22,10 @@ async function start(dwtPath, config, nodejsAtomSdk) {
         // 在最开始自动增加 LocalCache
         pluginArr.unshift(new PluginLocalCache('PluginLocalCache'));
 
-        // 在最末尾自动增加 Exit
-        pluginArr.push(new PluginExit('PluginExit'));
+        if (!config.doNotExit) {
+            // 在最末尾自动增加 Exit
+            pluginArr.push(new PluginExit('PluginExit'));
+        }
 
         // 将插件都先初始化，因为后续的逻辑中，有可能插件之间有依赖的
         for (let i = 0; i < pluginArr.length; i++) {

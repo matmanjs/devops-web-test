@@ -33,6 +33,13 @@ class PluginProject extends BasePlugin {
         this.port = opts.port || 0;
 
         /**
+         * 是否应该重复使用已存在的 project 进程，如果值为 true，则最后不需要清理
+         *
+         * @type {Boolean}
+         */
+        this.shouldReuse = !!opts.shouldReuse;
+
+        /**
          * 安装依赖时执行的命令，当其为函数时，会传入参数 testRecorder
          *
          * @type {String|Function}
@@ -113,7 +120,9 @@ class PluginProject extends BasePlugin {
     async afterRun(testRecord) {
         await super.afterRun(testRecord);
 
-        await this.clean(testRecord);
+        if (!this.shouldReuse) {
+            await this.clean(testRecord);
+        }
     }
 
     /**
