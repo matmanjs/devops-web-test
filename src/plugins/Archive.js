@@ -45,16 +45,6 @@ class PluginArchive extends BasePlugin {
 
         // 产出文件: test-recorder.json
         this.testRecordPath = path.join(this.rootPath, 'test-record.json');
-
-        // 追加结果到蓝盾变量中
-        testRecord.addTestCustomParams({
-            archiveConfig: {
-                path: path.relative(testRecord.workspacePath, this.rootPath),
-                entryFile: 'index.html',
-                tag: 'web自动化测试结果报告'
-            },
-            outputZipRelativePath: path.relative(testRecord.workspacePath, this.outputZipPath)
-        });
     }
 
     /**
@@ -80,47 +70,13 @@ class PluginArchive extends BasePlugin {
 
         // 获得 matman 端对端测试报告数据
         const e2eTestReport = this.getE2ETestReport(testRecord, pluginMap.pluginE2ETest);
+        pluginMap.pluginE2ETest.setTestResultReport(e2eTestReport);
 
         // 获得单元测试报告数据
         const unitTestReport = this.getUnitTestReport(testRecord, pluginMap.pluginUnitTest);
+        pluginMap.pluginUnitTest.setTestResultReport(unitTestReport);
 
-        // 判定测试是否成功
-        // result: 0为成功，1为失败, 2为跳过部分测试
-        let unionTestReport = {
-            result: 0
-        };
-
-        let summary = '';
-        if (e2eTestReport.testResult.stats == undefined) {
-            unionTestReport.result = 2;
-            summary += e2eTestReport.testResult.summary + '\n';
-        }
-        if (unitTestReport.testResult.stats == undefined) {
-            unionTestReport.result = 2;
-            summary += unitTestReport.testResult.summary + '\n';
-        }
-
-        if (e2eTestReport.testResult.stats != undefined)
-            if (e2eTestReport.testResult.stats.failures != 0 || e2eTestReport.testResult.stats.skipped != 0) {
-                unionTestReport.result = 1;
-                summary += '端到端测试不通过' + '\n';
-            }
-        if (unitTestReport.testResult.stats != undefined)
-            if (unitTestReport.testResult.stats.failures != 0 || unitTestReport.testResult.stats.skipped != 0) {
-                unionTestReport.result = 1;
-                summary += '单元测试不通过' + '\n';
-            }
-
-        unionTestReport.summary = summary;
-
-        // 追加结果到蓝盾变量中
-        testRecord.addTestCustomParams({
-            e2eTest: e2eTestReport.testResult,
-            unitTest: unitTestReport.testResult,
-            unionResult: unionTestReport
-        });
-
-        // 保存在蓝盾系统中自定义报告入口文件
+        // 保存自定义报告入口文件
         this.saveOutputIndexHtml(testRecord, pluginMap);
 
         // 保存 testRecord 内容
@@ -175,7 +131,7 @@ class PluginArchive extends BasePlugin {
     }
 
     /**
-     * 保存在蓝盾系统中自定义报告入口文件
+     * 保存自定义报告入口文件
      * @param {Object} testRecord
      */
     saveOutputIndexHtml(testRecord, pluginMap) {
@@ -192,22 +148,22 @@ class PluginArchive extends BasePlugin {
         const tplData = {
             testRecord,
             pkg,
-            dwtCustomPackageInfo: testRecord.dwtCustomPackageInfo,
             totalCost,
             list1: [],
             list2: [],
             e2eTest: {
                 shouldTest: pluginMap.pluginE2ETest.shouldRun(testRecord),
-                msg: testRecord.testCustomParams.e2eTest.summary,
+                msg: pluginMap.pluginE2ETest.testResultReport.testResult.summary,
                 outputUrl: `${path.relative(testRecord.outputPath, pluginMap.pluginE2ETest.outputPath)}/mochawesome.html`
             },
             e2eTestCoverage: {
                 shouldRun: pluginMap.pluginE2ETest.shouldRun(testRecord),
+                isExist: pluginMap.pluginE2ETest.isExistCoverageReport,
                 outputUrl: `${path.relative(testRecord.outputPath, pluginMap.pluginE2ETest.coverageOutputPath)}/index.html`
             },
             unitTest: {
                 shouldTest: pluginMap.pluginUnitTest.shouldRun(testRecord),
-                msg: testRecord.testCustomParams.unitTest.summary,
+                msg: pluginMap.pluginUnitTest.testResultReport.testResult.summary,
                 outputUrl: `${path.relative(testRecord.outputPath, pluginMap.pluginUnitTest.outputPath)}/mochawesome.html`
             },
             unitTestCoverage: {
@@ -221,12 +177,12 @@ class PluginArchive extends BasePlugin {
             const coverageData = getCoverageDataFromIndexHtml(path.join(testRecord.outputPath, tplData.e2eTestCoverage.outputUrl));
             tplData.e2eTestCoverage.resultMsg = coverageData.htmlResult || '';
 
-            if (coverageData.data) {
-                // 追加结果到蓝盾变量中
-                testRecord.addTestCustomParams({
-                    e2eTestCoverage: coverageData.data
-                });
-            }
+            // if (coverageData.data) {
+            //     // 追加结果到蓝盾变量中
+            //     testRecord.addTestCustomParams({
+            //         e2eTestCoverage: coverageData.data
+            //     });
+            // }
         }
 
         // 从 coverage/index.html 中获取覆盖率信息
@@ -234,12 +190,12 @@ class PluginArchive extends BasePlugin {
             const coverageData = getCoverageDataFromIndexHtml(path.join(testRecord.outputPath, tplData.unitTestCoverage.outputUrl));
             tplData.unitTestCoverage.resultMsg = coverageData.htmlResult || '';
 
-            if (coverageData.data) {
-                // 追加结果到蓝盾变量中
-                testRecord.addTestCustomParams({
-                    unitTestCoverage: coverageData.data
-                });
-            }
+            // if (coverageData.data) {
+            //     // 追加结果到蓝盾变量中
+            //     testRecord.addTestCustomParams({
+            //         unitTestCoverage: coverageData.data
+            //     });
+            // }
         }
 
         tplData.list2.push({
@@ -291,7 +247,7 @@ class PluginArchive extends BasePlugin {
 
     async compressDir(testRecord) {
         const source = this.rootPath;
-        const tmpDest = path.join(testRecord.basePath, path.basename(this.outputZipPath));
+        const tmpDest = path.join(testRecord.dwtPath, path.basename(this.outputZipPath));
         const dest = this.outputZipPath;
         console.log(dest);
 
@@ -360,7 +316,6 @@ function getTestReport(name, shouldRun, testReportPath) {
         };
     }
 
-    // 在蓝盾系统中定义的自定义全局变量
     const testResult = {};
     const reportResult = require(reportPath);
 

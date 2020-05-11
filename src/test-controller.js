@@ -4,7 +4,18 @@ const TestRecord = require('./TestRecord');
 
 const pkg = require('../package');
 
-async function start(basePath, config, nodejsAtomSdk) {
+/**
+ * 启动流程
+ *
+ * @param {String} dwtPath DWT（DevOps for Web Test） 目录，流水线式执行web自动化测试和输出测试产物的路径，如果插件传入了相对路径，则是相对于该路径而言
+ * @param {Object} config
+ * @param {String} [config.workspacePath] 工作区间的路径，即项目的根目录，如果是 git 项目，则是 git 仓库的根目录
+ * @param {String} [config.outputPath] 测试产物输出目录
+ * @param {Array} [config.plugins] 插件列表
+ * @param {Boolean} [config.doNotExit] 流水线执行完成之后是否不要强制退出
+ * @return {Promise}
+ */
+async function start(dwtPath, config) {
     let testRecord;
     let pluginArr = [];
 
@@ -14,16 +25,13 @@ async function start(basePath, config, nodejsAtomSdk) {
         console.log('\n');
         console.log(`开始执行web自动化测试主流程！基于 ${pkg.name} v${pkg.version}`);
 
-        testRecord = new TestRecord(basePath, config, nodejsAtomSdk);
+        testRecord = new TestRecord(dwtPath, config);
 
         // 分析 plugins 之间的依赖关系，进行排序，然后执行
         pluginArr = config.plugins || [];
 
         // 在最开始自动增加 LocalCache
         pluginArr.unshift(new PluginLocalCache('PluginLocalCache'));
-
-        // 在最末尾自动增加 Exit
-        pluginArr.push(new PluginExit('PluginExit'));
 
         // 将插件都先初始化，因为后续的逻辑中，有可能插件之间有依赖的
         for (let i = 0; i < pluginArr.length; i++) {

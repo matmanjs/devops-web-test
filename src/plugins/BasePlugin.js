@@ -45,7 +45,7 @@ class BasePlugin {
     }
 
     /**
-     * 执行之前
+     * 判断是否应该运行该插件
      */
     shouldRun(testRecord) {
         const result = (typeof this.shouldSkip === 'function') ? this.shouldSkip(testRecord) : !!this.shouldSkip;

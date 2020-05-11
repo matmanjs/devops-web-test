@@ -144,7 +144,7 @@ function saveUsedPort(name, port, testRecord) {
 
     // 更新时间
     data.t = Date.now();
-    data.basePath = testRecord.basePath;
+    data.dwtPath = testRecord.dwtPath;
 
     // 更新记录
     cacheData[testRecord.seqId] = data;

@@ -7,8 +7,8 @@ const PluginUnitTest = require('../../../src/plugins/UnitTest');
 const PluginE2ETest = require('../../../src/plugins/E2ETest');
 const PluginArchive = require('../../../src/plugins/Archive');
 
-// const basePath = __dirname;
-const basePath = '/Users/helinjiang/gitprojects/web-test-demo/DevOps/devops-app';
+// const dwtPath = __dirname;
+const dwtPath = '/Users/helinjiang/gitprojects/web-test-demo/DevOps/devops-app';
 
 const shouldRunE2ETest = true;
 const shouldRunUnitTest = false;
@@ -70,7 +70,7 @@ const config = {
     ]
 };
 
-testController.start(basePath, config)
+testController.start(dwtPath, config)
     .then((data) => {
         console.log(data);
     })

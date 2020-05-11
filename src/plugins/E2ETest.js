@@ -2,7 +2,6 @@ const path = require('path');
 const Xvfb = require('xvfb');
 const matman = require('matman');
 
-const runCmd = require('../util/run-cmd');
 const util = require('../util');
 
 const fse = require('fs-extra');
@@ -14,16 +13,11 @@ class PluginE2ETest extends BasePlugin {
         super(name || 'pluginE2ETest', opts);
 
         /**
-         * 是否启动测试
-         * @type {boolean}
-         */
-        this.enableTest = (typeof opts.enableTest === 'boolean') ? opts.enableTest : true;
-
-        /**
-         * 端对端测试根路径，由于蓝盾测试项目为 DevOps/devops-app ，因此相对而言项目路径为 ../matman-app
+         * 执行端对端测试的根路径
+         * 默认值： 由于我们推荐 DWT 路径为 DevOps/devops-app ，因此相对而言项目路径为 ../../
          * @type {String}
          */
-        this.rootPath = opts.rootPath || '../matman-app';
+        this.runTestPath = opts.runTestPath || '../../';
 
         /**
          * 端对端测试输出的路径
@@ -38,47 +32,17 @@ class PluginE2ETest extends BasePlugin {
         this.coverageOutputPath = '';
 
         /**
-         * 安装依赖时执行的命令，当其为函数时，会传入参数 testRecorder
-         * @type {String|Function}
-         */
-        this.installCmd = opts.installCmd || function (testRecord) {
-            return `npm install`;
-        };
-
-        /**
-         * 构建项目时执行的命令，当其为函数时，会传入参数 port 和 testRecorder
-         * @type {String|Function}
-         */
-        this.buildCmd = opts.buildCmd || function (testRecord) {
-            return `npm run build`;
-        };
-
-        const self = this;
-
-        /**
          * 执行测试的命令
          * @type {String|Function}
          */
         this.testCmd = opts.testCmd || function (testRecord) {
-            const cmd = `mocha`;
-
-            const whistlePort = self.getWhistlePort(testRecord);
-
-            return whistlePort ? `npx cross-env WHISTLE_PORT=${whistlePort} ${cmd}` : `npx ${cmd}`;
+            return 'npm run test:e2e';
         };
-
-        /**
-         * 获得 whistle 规则
-         * @type {Function}
-         */
-        this.getWhistlePort = (typeof opts.getWhistlePort === 'function' ? opts.getWhistlePort : function (testRecord) {
-            return 0;
-        });
 
         /**
          * 在运行测试之前执行的钩子函数
          *
-         * @type {Function} 接受两个参数：testRecord, runCmd
+         * @type {Function} 接受两个参数：testRecord, util
          */
         this.onBeforeTest = opts.onBeforeTest;
 
@@ -89,6 +53,31 @@ class PluginE2ETest extends BasePlugin {
         this.testCompleteCheck = (typeof opts.testCompleteCheck === 'function' ? opts.testCompleteCheck : function (data) {
             return false;
         });
+
+        /**
+         * matman 应用的根路径
+         * 默认值： 由于我们推荐 DWT 路径为 DevOps/devops-app ，因此相对而言项目路径为 ../matman-app
+         * @type {String}
+         */
+        this.matmanAppPath = opts.matmanAppPath || '../matman-app';
+
+        /**
+         * matman 应用安装依赖时执行的命令，当其为函数时，会传入参数 testRecorder
+         *
+         * @type {String|Function}
+         */
+        this.matmanAppInstallCmd = opts.matmanAppInstallCmd || function (testRecord) {
+            return `npm install`;
+        };
+
+        /**
+         * matman 应用构建项目时执行的命令，当其为函数时，会传入参数 testRecorder
+         *
+         * @type {String|Function}
+         */
+        this.matmanAppBuildCmd = opts.matmanAppBuildCmd || function (testRecord) {
+            return `npm run build`;
+        };
     }
 
     /**
@@ -99,15 +88,11 @@ class PluginE2ETest extends BasePlugin {
         await super.init(testRecord);
 
         // 特殊处理下目录，将其修改为绝对路径
-        this.rootPath = util.getAbsolutePath(testRecord.basePath, this.rootPath);
+        this.runTestPath = util.getAbsolutePath(testRecord.dwtPath, this.runTestPath);
+        this.matmanAppPath = util.getAbsolutePath(testRecord.dwtPath, this.matmanAppPath);
 
         this.outputPath = path.join(testRecord.outputPath, 'e2e_test_report');
         this.coverageOutputPath = path.join(this.outputPath, 'coverage');
-
-        testRecord.addTestCustomParams({
-            e2eTestRelativePathToOutput: path.relative(testRecord.outputPath, this.outputPath),
-            e2eTestCoverageRelativePathToOutput: path.relative(testRecord.outputPath, this.coverageOutputPath)
-        });
     }
 
     /**
@@ -128,18 +113,18 @@ class PluginE2ETest extends BasePlugin {
         console.log('\n');
         console.log('ready to runTest for e2e test ...');
 
-        // 安装依赖
-        await this.install(testRecord);
+        // matman-app 安装依赖
+        await this.matmanAppInstall(testRecord);
 
-        // 测试之前需要构建
-        await this.build(testRecord);
+        // 测试之前需要 matman-app 构建
+        await this.matmanAppBuild(testRecord);
 
         // 启用 xvfb
         await this.startXvfb(testRecord);
 
         // 在运行测试之前执行的钩子函数
         if (typeof this.onBeforeTest === 'function') {
-            await Promise.resolve(this.onBeforeTest.call(this, testRecord, runCmd));
+            await Promise.resolve(this.onBeforeTest.call(this, testRecord, util));
         }
 
         // 启动测试
@@ -154,11 +139,6 @@ class PluginE2ETest extends BasePlugin {
         // copy build to output
         await this.copyBuildOutputToArchive(testRecord);
 
-        // 追加结果到蓝盾变量中
-        testRecord.addTestCustomParams({
-            shouldRunE2ETest: this.shouldRun(testRecord)
-        });
-
         console.log('runTest for e2e test finished!');
         console.log('\n');
     }
@@ -169,23 +149,6 @@ class PluginE2ETest extends BasePlugin {
      */
     async afterRun(testRecord) {
         await super.afterRun(testRecord);
-    }
-
-    /**
-     * 安装依赖
-     *
-     * @param testRecord
-     */
-    async install(testRecord) {
-        if (testRecord.isDev) {
-            return Promise.resolve();
-        }
-
-        const cmd = util.getFromStrOrFunc(this.installCmd, testRecord);
-
-        const command = `${cmd}`;
-
-        await runCmd.runByExec(command, { cwd: this.rootPath });
     }
 
     /**
@@ -203,12 +166,12 @@ class PluginE2ETest extends BasePlugin {
         console.log('检测到 process.env.USE_XVFB 存在，因此启用 xvfb!');
 
         // 注意这种写法程序没有响应，原因还未知
-        // await runCmd.runByExec('Xvfb -ac -screen scrn 1280x2000x24 :9.0 & export DISPLAY=:9.0', { cwd: this.rootPath },function (data) {
+        // await util.runByExec('Xvfb -ac -screen scrn 1280x2000x24 :9.0 & export DISPLAY=:9.0', { cwd: this.runTestPath },function (data) {
         //     return true;
         // });
 
         // https://www.npmjs.com/package/xvfb
-        // 2020.3.12 保持默认值就可以了，不需要额外配置 xvfb_args 参数，否则在蓝盾里面运行会报错如下错误：
+        // 2020.3.12 保持默认值就可以了，不需要额外配置 xvfb_args 参数，否则可能会报错如下错误：
         // nightmare electron child process exited with code 1: general error - you may need xvfb
         const xvfb = new Xvfb({
             // timeout: 2000,
@@ -244,16 +207,41 @@ class PluginE2ETest extends BasePlugin {
     }
 
     /**
-     * 构建
+     * matman-app 安装依赖
      *
      * @param testRecord
      */
-    async build(testRecord) {
-        const cmd = util.getFromStrOrFunc(this.buildCmd, testRecord);
+    async matmanAppInstall(testRecord) {
+        if (testRecord.isDev) {
+            return Promise.resolve();
+        }
+
+        if (typeof this.matmanAppInstallCmd === 'function') {
+            this.matmanAppInstallCmd = this.matmanAppInstallCmd.bind(this);
+        }
+
+        const cmd = util.getFromStrOrFunc(this.matmanAppInstallCmd, testRecord);
 
         const command = `${cmd}`;
 
-        await runCmd.runByExec(command, { cwd: this.rootPath });
+        await util.runByExec(command, { cwd: this.matmanAppPath });
+    }
+
+    /**
+     * matman-app 构建
+     *
+     * @param testRecord
+     */
+    async matmanAppBuild(testRecord) {
+        if (typeof this.matmanAppBuildCmd === 'function') {
+            this.matmanAppBuildCmd = this.matmanAppBuildCmd.bind(this);
+        }
+
+        const cmd = util.getFromStrOrFunc(this.matmanAppBuildCmd, testRecord);
+
+        const command = `${cmd}`;
+
+        await util.runByExec(command, { cwd: this.matmanAppPath });
     }
 
     /**
@@ -274,19 +262,19 @@ class PluginE2ETest extends BasePlugin {
         //     command = `xvfb-run -a ${command}`;
         // }
 
-        await runCmd.runByExec(command, { cwd: this.rootPath }, this.testCompleteCheck.bind(this));
+        await util.runByExec(command, { cwd: this.runTestPath }, this.testCompleteCheck.bind(this));
 
         this._cacheTestCmd = command;
     }
 
     /**
-     * 启动测试
+     * 分析并生成测试覆盖率数据
      *
      * @param testRecord
      */
     async createE2ECoverage(testRecord) {
-        const globPattern = path.join(this.rootPath, 'build/coverage_output/**/*.json');
-        const reporterDir = path.join(this.rootPath, 'build/coverage');
+        const globPattern = path.join(this.matmanAppPath, 'build/coverage_output/**/*.json');
+        const reporterDir = path.join(this.matmanAppPath, 'build/coverage');
 
         console.log('准备生成端对端自动化测试报告！', globPattern, reporterDir);
 
@@ -294,9 +282,11 @@ class PluginE2ETest extends BasePlugin {
             dir: reporterDir
         })
             .then((data) => {
+                this.isExistCoverageReport = true;
                 console.log('生成端对端自动化测试报告成功！', data);
             })
             .catch((err) => {
+                this.isExistCoverageReport = false;
                 console.error('生成端对端自动化测试报告失败！', err && err.message || err);
             });
     }
@@ -308,9 +298,9 @@ class PluginE2ETest extends BasePlugin {
      */
     async copyBuildOutputToArchive(testRecord) {
         try {
-            const srcPath = path.join(this.rootPath, 'build');
+            const srcPath = path.join(this.matmanAppPath, 'build');
             const distPath = path.join(testRecord.outputPath, 'e2e_test_build_output');
-            const reporterDir = path.join(this.rootPath, 'build/coverage');
+            const reporterDir = path.join(this.matmanAppPath, 'build/coverage');
 
             if (fse.pathExistsSync(srcPath)) {
                 // 将端对端测试运行结果拷贝到归档目录中
@@ -331,6 +321,13 @@ class PluginE2ETest extends BasePlugin {
         }
     }
 
+    /**
+     * 设置测试结果报告
+     * @param testResultReport
+     */
+    setTestResultReport(testResultReport) {
+        this.testResultReport = testResultReport;
+    }
 }
 
 module.exports = PluginE2ETest;

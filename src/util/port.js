@@ -73,7 +73,13 @@ function findAvailablePort(port = 9528, skipList = []) {
     });
 }
 
-function kill(port) {
+/**
+ * 杀掉指定端口的进程
+ *
+ * @param port
+ * @return {Promise}
+ */
+function killPort(port) {
     console.log('---kill---', port);
 
     // const command = `ps -ef | grep "node" | grep ${port} | grep -v grep | awk '{print $2}' | xargs kill -9`;
@@ -92,5 +98,6 @@ function kill(port) {
 
 module.exports = {
     findAvailablePort,
-    kill
+    killPort,
+    portIsOccupied
 };

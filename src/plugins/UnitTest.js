@@ -1,8 +1,5 @@
 const path = require('path');
-const runCmd = require('../util/run-cmd');
 const util = require('../util');
-
-const fse = require('fs-extra');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -11,51 +8,48 @@ class PluginUnitTest extends BasePlugin {
         super(name || 'pluginUnitTest', opts);
 
         /**
-         * 单元根路径，由于蓝盾测试项目为 DevOps/devops-app ，因此相对而言项目路径为 ../../
+         * 执行单元测试的根路径
+         * 默认值： 由于我们推荐 DWT 路径为 DevOps/devops-app ，因此相对而言项目路径为 ../../
+         *
          * @type {String}
          */
-        this.rootPath = opts.rootPath || '../../';
+        this.runTestPath = opts.runTestPath || '../../';
 
         /**
-         * 单元测试输出的路径
+         * 单元测试结果输出的路径
+         *
          * @type {String}
          */
         this.outputPath = '';
 
         /**
          * 单元测试的覆盖率输出的路径，在 this.outputPath 之内
+         *
          * @type {String}
          */
         this.coverageOutputPath = '';
 
         /**
-         * 安装依赖时执行的命令，当其为函数时，会传入参数 testRecorder
-         * @type {String|Function}
-         */
-        this.installCmd = opts.installCmd || function (testRecord) {
-            return `npm install`;
-        };
-
-        /**
-         * 执行测试的命令
+         * 执行测试的命令，当其为函数时，会传入参数 testRecorder
+         *
          * @type {String|Function}
          */
         this.testCmd = opts.testCmd || function (testRecord) {
-            return `npx cross-env BABEL_ENV=test mocha`;
+            return 'npm run test:unit';
         };
 
         /**
-         * 执行测试的命令
-         * @type {String|Function} 接受两个参数：testCmd, testRecord
+         * 执行获取测试覆盖率的命令
+         * @type {String|Function} 接受两个参数：testRecord, testCmdToExecute
          */
-        this.coverageCmd = opts.coverageCmd || function (testCmd, testRecord) {
-            return `npx nyc --silent ${testCmd.replace(/^npx\s+/, ' ')}`;
+        this.coverageCmd = opts.coverageCmd || function (testRecord, testCmdToExecute) {
+            return 'npm run coverage';
         };
 
         /**
          * 在运行测试之前执行的钩子函数
          *
-         * @type {Function} 接受两个参数：testRecord, runCmd
+         * @type {Function} 接受两个参数：testRecord, util
          */
         this.onBeforeTest = opts.onBeforeTest;
 
@@ -82,15 +76,10 @@ class PluginUnitTest extends BasePlugin {
         await super.init(testRecord);
 
         // 特殊处理下目录，将其修改为绝对路径
-        this.rootPath = util.getAbsolutePath(testRecord.basePath, this.rootPath);
+        this.runTestPath = util.getAbsolutePath(testRecord.dwtPath, this.runTestPath);
 
         this.outputPath = path.join(testRecord.outputPath, 'unit_test_report');
         this.coverageOutputPath = path.join(this.outputPath, 'coverage');
-
-        testRecord.addTestCustomParams({
-            unitTestRelativePathToOutput: path.relative(testRecord.outputPath, this.outputPath),
-            unitTestCoverageRelativePathToOutput: path.relative(testRecord.outputPath, this.coverageOutputPath)
-        });
     }
 
     /**
@@ -111,12 +100,9 @@ class PluginUnitTest extends BasePlugin {
         console.log('\n');
         console.log('ready to runTest for unit test ...');
 
-        // 安装依赖
-        await this.install(testRecord);
-
         // 在运行测试之前执行的钩子函数
         if (typeof this.onBeforeTest === 'function') {
-            await Promise.resolve(this.onBeforeTest.call(this, testRecord, runCmd));
+            await Promise.resolve(this.onBeforeTest.call(this, testRecord, util));
         }
 
         // 启动测试
@@ -124,11 +110,6 @@ class PluginUnitTest extends BasePlugin {
 
         // 获取单元测试覆盖率
         await this.runCoverage(testRecord);
-
-        // 追加结果到蓝盾变量中
-        testRecord.addTestCustomParams({
-            shouldRunUnitTest: this.shouldRun(testRecord)
-        });
 
         console.log('runTest for unit test finished!');
         console.log('\n');
@@ -140,23 +121,6 @@ class PluginUnitTest extends BasePlugin {
      */
     async afterRun(testRecord) {
         await super.afterRun(testRecord);
-    }
-
-    /**
-     * 安装依赖
-     *
-     * @param testRecord
-     */
-    async install(testRecord) {
-        if (testRecord.isDev) {
-            return Promise.resolve();
-        }
-
-        const cmd = util.getFromStrOrFunc(this.installCmd, testRecord);
-
-        const command = `${cmd}`;
-
-        await runCmd.runByExec(command, { cwd: this.rootPath });
     }
 
     /**
@@ -172,7 +136,7 @@ class PluginUnitTest extends BasePlugin {
         // 获得测试命令
         const command = util.getFromStrOrFunc(this.testCmd, testRecord);
 
-        await runCmd.runByExec(command, { cwd: this.rootPath }, this.testCompleteCheck.bind(this));
+        await util.runByExec(command, { cwd: this.runTestPath }, this.testCompleteCheck.bind(this));
 
         this._cacheTestCmd = command;
     }
@@ -187,17 +151,25 @@ class PluginUnitTest extends BasePlugin {
             this.coverageCmd = this.coverageCmd.bind(this);
         }
 
-        const command = util.getFromStrOrFunc(this.coverageCmd, this._cacheTestCmd, testRecord);
+        const command = util.getFromStrOrFunc(this.coverageCmd, testRecord, this._cacheTestCmd);
 
         this._cacheCoverageCmd = command;
 
-        await runCmd.runByExec(command, { cwd: this.rootPath });
+        await util.runByExec(command, { cwd: this.runTestPath });
 
         // 检查文件已经存在才算结束
         // 2020.3.13 发现命令执行完成时，coverage 文件夹可能还没有来的及生成
         if (typeof this.coverageCompleteCheck === 'function') {
             await Promise.resolve(this.coverageCompleteCheck.call(this, testRecord));
         }
+    }
+
+    /**
+     * 设置测试结果报告
+     * @param testResultReport
+     */
+    setTestResultReport(testResultReport) {
+        this.testResultReport = testResultReport;
     }
 }
 
