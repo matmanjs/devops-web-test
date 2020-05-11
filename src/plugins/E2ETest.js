@@ -283,8 +283,8 @@ class PluginE2ETest extends BasePlugin {
      * @param testRecord
      */
     async createE2ECoverage(testRecord) {
-        const globPattern = path.join(this.runTestPath, 'build/coverage_output/**/*.json');
-        const reporterDir = path.join(this.runTestPath, 'build/coverage');
+        const globPattern = path.join(this.matmanAppPath, 'build/coverage_output/**/*.json');
+        const reporterDir = path.join(this.matmanAppPath, 'build/coverage');
 
         console.log('准备生成端对端自动化测试报告！', globPattern, reporterDir);
 
@@ -308,9 +308,9 @@ class PluginE2ETest extends BasePlugin {
      */
     async copyBuildOutputToArchive(testRecord) {
         try {
-            const srcPath = path.join(this.runTestPath, 'build');
+            const srcPath = path.join(this.matmanAppPath, 'build');
             const distPath = path.join(testRecord.outputPath, 'e2e_test_build_output');
-            const reporterDir = path.join(this.runTestPath, 'build/coverage');
+            const reporterDir = path.join(this.matmanAppPath, 'build/coverage');
 
             if (fse.pathExistsSync(srcPath)) {
                 // 将端对端测试运行结果拷贝到归档目录中
