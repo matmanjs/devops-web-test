@@ -19,11 +19,11 @@
 
 ## 接口文档
 
-### start(dwtPath, config, nodejsAtomSdk)
+### start(dwtPath, config)
 
 启动自动化测试。
 
-- `dwtPath`，`String`，`DWT`（DevOps for Web Test） 目录，流水线式执行web自动化测试和输出测试产物的路径，，如果插件传入了相对路径，则是相对于该路径而言
+- `dwtPath`，`String`，`DWT`（DevOps for Web Test） 目录，流水线式执行web自动化测试和输出测试产物的路径，如果插件传入了相对路径，则是相对于该路径而言
 - `config`，`Object`，配置参数
   - `config.workspacePath`，`String`，工作区间的路径，即项目的根目录，如果是 git 项目，则是 git 仓库的根目录
   - `config.outputPath`，`String`，测试产物输出目录，默认为 `path.join(dwtPath, 'output')`

@@ -192,7 +192,6 @@ class PluginArchive extends BasePlugin {
         const tplData = {
             testRecord,
             pkg,
-            dwtCustomPackageInfo: testRecord.dwtCustomPackageInfo,
             totalCost,
             list1: [],
             list2: [],

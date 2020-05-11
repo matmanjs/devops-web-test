@@ -9,6 +9,7 @@ const PluginWhistle = require('./plugins/Whistle');
 const PluginUnitTest = require('./plugins/UnitTest');
 const PluginE2ETest = require('./plugins/E2ETest');
 const PluginArchive = require('./plugins/Archive');
+const PluginExit = require('./plugins/Exit');
 const PluginCustom = require('./plugins/Custom');
 
 module.exports = {
@@ -22,5 +23,6 @@ module.exports = {
     PluginE2ETest,
     PluginArchive,
     PluginCustom,
+    PluginExit,
     BasePlugin
 };

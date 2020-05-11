@@ -4,7 +4,14 @@ const businessProcessHandler = require('../business/process-handler');
 
 class PluginExit extends BasePlugin {
     constructor(name, opts = {}) {
-        super(name || 'pluginLocalCache', opts);
+        super(name || 'pluginExit', opts);
+
+        /**
+         * 延迟调用函数名字
+         *
+         * @type {String}
+         */
+        this.delayCallName = '';
     }
 
     /**
@@ -30,10 +37,9 @@ class PluginExit extends BasePlugin {
     async run(testRecord) {
         await super.run(testRecord);
 
-        if (testRecord.isRunInDevopsApp) {
-            // 注意，在蓝盾平台中，不要执行这个步骤，否则将导致无法设置蓝盾变量
-            testRecord._callExit = (delay) => {
-                return this.exitNow(testRecord, delay);
+        if (this.delayCallName) {
+            testRecord[this.delayCallName] = async (delay) => {
+                return await this.exitNow(testRecord, delay);
             };
         } else {
             await this.exitNow(testRecord);

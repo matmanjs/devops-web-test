@@ -3,7 +3,7 @@ const _ = require('lodash');
 const util = require('./util');
 
 class TestRecord {
-    constructor(dwtPath, config = {}, nodejsAtomSdk) {
+    constructor(dwtPath, config = {}) {
         // devops-app 目录的根路径，自动化测试项目根目录
         this.dwtPath = util.getAbsolutePath(dwtPath);
 
@@ -15,30 +15,6 @@ class TestRecord {
 
         // 是否为开发者模式
         this.isDev = !!config.isDev;
-
-        // 是否需要运行端对端测试
-        this.shouldRunE2ETest = (typeof config.shouldRunE2ETest === 'boolean') ? config.shouldRunE2ETest : true;
-
-        // 是否需要运行单元测试
-        this.shouldRunUnitTest = (typeof config.shouldRunUnitTest === 'boolean') ? config.shouldRunUnitTest : true;
-
-        // 判断是否在蓝盾平台运行
-        this.isRunInDevopsApp = !!config.isRunInDevopsApp;
-        this.nodejsAtomSdk = nodejsAtomSdk;
-
-        // 获取蓝盾中环境变量的数据，注意这个值只是当时的情况，
-        // 后续的其他插件还会改变它的，
-        // 因此如果要保证最新的，则需要用方法调用
-        this.curDevopsAppInputParams = this.nodejsAtomSdk && this.nodejsAtomSdk.getInputParams && this.nodejsAtomSdk.getInputParams() || {};
-
-        // 蓝盾平台的流水线地址地址
-        this.devopsAppPipelineHomeUrl = this.curDevopsAppInputParams.devops_app_pipeline_home_url || '';
-
-        // 自定义 dwt 配置包
-        this.dwtCustomPackageInfo = {
-            name: this.curDevopsAppInputParams['dwt_custom_package_info.name'] || '',
-            version: this.curDevopsAppInputParams['dwt_custom_package_info.version'] || ''
-        };
 
         // 自动生成的唯一ID，用于区别不同批次的流程，
         // 尤其是有多个流程在同一个测试机中运行的时候，如果不做区分，则可能会有相互影响
