@@ -1,6 +1,12 @@
 const path = require('path');
 const _ = require('lodash');
 const fse = require('fs-extra');
+const ejs = require('ejs');
+const compressing = require('compressing');
+const $ = require('cheerio');
+
+const pkg = require('../package');
+
 const util = require('./util');
 const businessProcessHandler = require('./business/process-handler');
 const businessLocalCache = require('./business/local-cache');
@@ -193,6 +199,258 @@ class DevOpsWebTest {
         } catch (err) {
             console.error(err);
         }
+    }
+
+    /**
+     * 获得 matman 端对端测试报告数据
+     *
+     * @param {Boolean} enableTest
+     * @param {String} mochawesomeFilePath
+     * @param {String} coverageHtmlPath
+     * @return {Object}
+     */
+    getE2ETestReport(enableTest, mochawesomeFilePath, coverageHtmlPath) {
+        return getTestReport('端对端测试', enableTest, mochawesomeFilePath, coverageHtmlPath);
+    }
+
+    /**
+     * 获得单元测试报告数据
+     *
+     * @param {Boolean} enableTest
+     * @param {String} outputPath
+     * @return {Object}
+     */
+    getUnitTestReport(enableTest, outputPath) {
+        // 产出文件: unit_test_report/mochawesome.json
+        const unitTestReportPath = `${outputPath}/mochawesome.json`;
+
+        return getTestReport('单元测试', enableTest, unitTestReportPath);
+    }
+
+    /**
+     * 获得单元测试报告数据
+     *
+     * @param {String} name
+     * @param {Object} opts
+     * @return {Object}
+     */
+    getTestReport(name, opts = {}) {
+        return getTestReport(name, opts);
+    }
+
+    /**
+     * 保存自定义报告入口文件
+     * @param {Object} testRecord
+     */
+    saveOutputIndexHtml(testRecord, pluginMap) {
+        // 获取模版内容
+        const tplPath = path.join(__dirname, '../tpl/index.html.tpl');
+        const tplContent = fse.readFileSync(tplPath, {
+            encoding: 'utf8'
+        });
+
+        // 总耗时
+        const totalCost = `${testRecord.getTotalCost() / 1000} 秒`;
+
+        // 获取模板中需要的数据
+        const tplData = {
+            testRecord,
+            pkg,
+            totalCost,
+            list1: [],
+            list2: [],
+            e2eTest: {
+                shouldTest: pluginMap.pluginE2ETest.shouldRun(testRecord),
+                msg: pluginMap.pluginE2ETest.testResultReport.testResult.summary,
+                outputUrl: `${path.relative(testRecord.outputPath, pluginMap.pluginE2ETest.outputPath)}/mochawesome.html`
+            },
+            e2eTestCoverage: {
+                shouldRun: pluginMap.pluginE2ETest.shouldRun(testRecord),
+                isExist: pluginMap.pluginE2ETest.isExistCoverageReport,
+                outputUrl: `${path.relative(testRecord.outputPath, pluginMap.pluginE2ETest.coverageOutputPath)}/index.html`
+            },
+            unitTest: {
+                shouldTest: pluginMap.pluginUnitTest.shouldRun(testRecord),
+                msg: pluginMap.pluginUnitTest.testResultReport.testResult.summary,
+                outputUrl: `${path.relative(testRecord.outputPath, pluginMap.pluginUnitTest.outputPath)}/mochawesome.html`
+            },
+            unitTestCoverage: {
+                shouldRun: pluginMap.pluginUnitTest.shouldRun(testRecord),
+                outputUrl: `${path.relative(testRecord.outputPath, pluginMap.pluginUnitTest.coverageOutputPath)}/index.html`
+            }
+        };
+
+        // 从 coverage/index.html 中获取覆盖率信息
+        if (tplData.e2eTestCoverage.shouldRun && tplData.e2eTestCoverage.outputUrl) {
+            const coverageData = getCoverageDataFromIndexHtml(path.join(testRecord.outputPath, tplData.e2eTestCoverage.outputUrl));
+            tplData.e2eTestCoverage.resultMsg = coverageData.htmlResult || '';
+
+            // if (coverageData.data) {
+            //     // 追加结果到蓝盾变量中
+            //     testRecord.addTestCustomParams({
+            //         e2eTestCoverage: coverageData.data
+            //     });
+            // }
+        }
+
+        // 从 coverage/index.html 中获取覆盖率信息
+        if (tplData.unitTestCoverage.shouldRun && tplData.unitTestCoverage.outputUrl) {
+            const coverageData = getCoverageDataFromIndexHtml(path.join(testRecord.outputPath, tplData.unitTestCoverage.outputUrl));
+            tplData.unitTestCoverage.resultMsg = coverageData.htmlResult || '';
+
+            // if (coverageData.data) {
+            //     // 追加结果到蓝盾变量中
+            //     testRecord.addTestCustomParams({
+            //         unitTestCoverage: coverageData.data
+            //     });
+            // }
+        }
+
+        tplData.list2.push({
+            url: `output.zip`,
+            msg: 'output.zip'
+        });
+
+        tplData.list2.push({
+            url: `test-record.json`,
+            msg: 'test-record.json'
+        });
+
+        if (pluginMap.pluginE2ETest.shouldRun(testRecord)) {
+            tplData.list2.push({
+                url: pluginMap.pluginWhistle.configFileName,
+                msg: pluginMap.pluginWhistle.configFileName
+            });
+        }
+
+        // 获取最终内容
+        let htmlContent = ejs.render(tplContent, tplData);
+
+        // 保存文件
+        fse.outputFileSync(this.indexHtmlPath, htmlContent);
+        fse.outputJsonSync(this.indexHtmlDataPath, tplData);
+    }
+}
+
+/**
+ * 获得处理之后的百分值，留两位有效数字
+ * @param {Number} percent 百分值，例如 99.19354838709677
+ * @return {String} 保留两位有效数字，例如 99.19
+ */
+function getPercentShow(percent) {
+    return percent.toFixed(2);
+}
+
+/**
+ * 将毫秒时间转义为易识别的时间
+ * @param {Number} duration 时间，单位毫秒
+ */
+function getDurationShow(duration = 0) {
+    const ONE_SECOND = 1000;
+    const ONE_MINUTE = 60 * ONE_SECOND;
+
+    if (duration < ONE_MINUTE) {
+        return duration / ONE_SECOND + '秒';
+    } else {
+        const minutes = parseInt(duration / ONE_MINUTE, 10);
+        const seconds = (duration - minutes * ONE_MINUTE) / ONE_SECOND;
+        return minutes + '分' + seconds + '秒';
+    }
+}
+
+/**
+ * 从测试报告中获得自己需要的报告
+ *
+ * @param {String} name
+ * @param {Object} opts
+ * @return {Object}
+ */
+function getTestReport(name, opts) {
+    const { enableTest, mochawesomeFilePath, coverageHtmlPath } = opts;
+
+    // 如果不运行测试的话
+    if (!enableTest) {
+        return {
+            testResult: {
+                summary: `已配置不执行${name}！`
+            }
+        };
+    }
+
+    // 如果没有这个报告，则说明并没有执行测试
+    if (!fse.existsSync(mochawesomeFilePath)) {
+        return {
+            testResult: {
+                summary: `${name}失败，没有测试报告！`
+            }
+        };
+    }
+
+    const testResult = {};
+    const mochawesomeJsonData = require(mochawesomeFilePath);
+
+    // 执行的结果状态
+    testResult.stats = mochawesomeJsonData.stats || {};
+
+    // 测试用例通过率
+    // 注意 testResult.stats.passPercent 会把 passes 和 pending（用it.skip语法主动跳过的用例） 都算成功
+    // testResult.passPercent = getPercentShow(testResult.stats.passPercent);
+    testResult.passPercent = getPercentShow(testResult.stats.passes * 100 / testResult.stats.testsRegistered);
+
+    // 测试用例实际成功率
+    testResult.actualSuccessPercent = getPercentShow(testResult.stats.passes * 100 / (testResult.stats.passes + testResult.stats.failures));
+
+    // 运行耗时
+    testResult.duration = getDurationShow(testResult.stats.duration);
+
+    // 报告汇总
+    // 单元测试通过率: 98.85%（431/436)，实际成功率: 100.00%（431/(431+0)，耗时 0.112秒，总用例数436个，成功431个，失败0个，主动跳过未执行4个，超时异常未执行1个
+    testResult.summary = `${name}通过率: ${testResult.passPercent}%（${testResult.stats.passes}/${testResult.stats.testsRegistered})，实际成功率: ${testResult.actualSuccessPercent}%（${testResult.stats.passes}/(${testResult.stats.passes}+${testResult.stats.failures})，耗时 ${testResult.duration}，总用例数${testResult.stats.testsRegistered}个，成功${testResult.stats.passes}个，失败${testResult.stats.failures}个，主动跳过未执行${testResult.stats.pending}个，超时异常未执行${testResult.stats.skipped}个`;
+
+    // 从覆盖率文件中获得覆盖率数据
+    const coverageResult = getCoverageDataFromIndexHtml(coverageHtmlPath);
+
+    return {
+        testResult,
+        coverageResult
+    };
+}
+
+function getCoverageDataFromIndexHtml(filePath) {
+    const result = {};
+
+    if (!fse.existsSync(filePath)) {
+        return result;
+    }
+
+    try {
+        // html 文件内容
+        const contents = fse.readFileSync(filePath, { encoding: 'utf8' });
+
+        // 获取关键数据
+        result.htmlResult = $('.wrapper .pad1 .clearfix', contents).html() || '';
+
+        const map = {};
+
+        // 解析出数据
+        $('.coverage-wrapper > div', `<div class="coverage-wrapper">${result.htmlResult}</div>`).each(function () {
+            const $this = $(this);
+            const value = $('span', $this).eq(0).text().trim();
+            const name = $('span', $this).eq(1).text().trim().toLowerCase();
+            const desc = $('span', $this).eq(2).text().trim();
+
+            map[name] = {
+                name,
+                value,
+                desc
+            };
+        });
+
+        result.data = map;
+
+        return result;
+    } catch (err) {
+        return result;
     }
 }
 
