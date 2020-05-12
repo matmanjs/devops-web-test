@@ -31,7 +31,7 @@ web自动化测试结果报告，生成时间：<code><%=new Date()%></code> ，
 <p><a href="<%=e2eTest.testOutputUrl%>" target="_blank">端对端测试详细报告</a></p>
 <% } %>
 
-<% if(e2eTest.isExist){ %>
+<% if(e2eTest.isCoverageSuccess){ %>
 <p><a href="<%=e2eTest.coverageOutputUrl%>" target="_blank">端对端测试覆盖率报告</a></p>
 <%- e2eTest.coverageMsg %>
 <% } %>

@@ -341,7 +341,7 @@ function getTestReport(name, opts) {
     // 从覆盖率文件中获得覆盖率数据
     const coverageResult = getCoverageDataFromIndexHtml(coverageHtmlPath);
 
-    const isCoverageSuccess = coverageResult && coverageResult.htmlResult;
+    const isCoverageSuccess = !!(coverageResult && coverageResult.htmlResult);
 
     return {
         testResult,
