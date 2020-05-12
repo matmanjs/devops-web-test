@@ -261,6 +261,21 @@ class DevOpsWebTest {
         fse.outputFileSync(path.join(outputPath, 'index.html'), htmlContent);
         fse.outputJsonSync(path.join(outputPath, 'index-html.json'), tplData);
     }
+
+    async compressDir(sourceFolder,outputZipPath) {
+        const source = sourceFolder;
+        const tmpDest = path.join(__dirname, path.basename(outputZipPath));
+        const dest = outputZipPath;
+        console.log(dest);
+
+        // 压缩zip，注意先保存在临时目录里面
+        await compressing.zip.compressDir(source, tmpDest);
+
+        // 然后再移动目的地
+        fse.moveSync(tmpDest, dest, {
+            overwrite: true
+        });
+    }
 }
 
 /**
