@@ -2,6 +2,8 @@ const path = require('path');
 const _ = require('lodash');
 const fse = require('fs-extra');
 const util = require('./util');
+const businessProcessHandler = require('./business/process-handler');
+const businessLocalCache = require('./business/local-cache');
 
 class DevOpsWebTest {
     constructor(dwtPath, config = {}) {
@@ -64,9 +66,35 @@ class DevOpsWebTest {
     async runByExec(cmdToRun, options, customCloseHandler) {
         const cmd = util.getFromStrOrFunc(cmdToRun);
 
-        const command = `${cmd} --${this.seqId}`;
+        const command = `${cmd} --dwt-${this.seqId}`;
 
         return util.runByExec(command, options, customCloseHandler);
+    }
+
+    async findAvailablePort(name = 'unknown') {
+        // 获得本地缓存的已经被占用的端口
+        const usedPort = businessLocalCache.getUsedPort();
+
+        // 获得可用的端口
+        const port = await util.findAvailablePort(9528, usedPort);
+
+        if (port) {
+            // 缓存在本地
+            businessLocalCache.saveUsedPort(name, port, {
+                seqId: this.seqId,
+                dwtPath: this.dwtPath
+            });
+        }
+
+        return port;
+    }
+
+    async lockPort(name, port, pid) {
+        // 缓存在本地
+        businessLocalCache.saveUsedPid('mockstar', pid, {
+            seqId: this.seqId,
+            dwtPath: this.dwtPath
+        });
     }
 }
 
