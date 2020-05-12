@@ -66,7 +66,8 @@ class DevOpsWebTest {
     async runByExec(cmdToRun, options, customCloseHandler) {
         const cmd = util.getFromStrOrFunc(cmdToRun);
 
-        const command = `${cmd} --dwt-${this.seqId}`;
+        // const command = `${cmd} --dwt-${this.seqId}`;
+        const command = `${cmd}`;
 
         return util.runByExec(command, options, customCloseHandler);
     }
@@ -91,10 +92,50 @@ class DevOpsWebTest {
 
     async lockPort(name, port, pid) {
         // 缓存在本地
-        businessLocalCache.saveUsedPid('mockstar', pid, {
+        businessLocalCache.saveUsedPid(name, pid, {
             seqId: this.seqId,
             dwtPath: this.dwtPath
         });
+    }
+
+    async checkIfWhistleIsStarted(port) {
+        // 自检一下 whistle 是否真正启动了
+        const checkURL = `http://127.0.0.1:${port}/cgi-bin/get-data`;
+
+        await util.checkAndWaitURLAvailable(checkURL)
+            .then((data) => {
+                return data;
+            })
+            .catch((err) => {
+                return Promise.reject(`检测 whistle 未成功启动, checkURL=${checkURL}`);
+            });
+    }
+
+    async generateWhistleRulesConfigFile(configFile, getWhistleRules) {
+        const whistleRules = getWhistleRules();
+
+        // 校验合法性
+        if (!whistleRules || !whistleRules.name || !whistleRules.rules) {
+            console.log('无法自动生成 whistle 代理规则！', JSON.stringify(this));
+            return Promise.reject('无法自动生成 whistle 代理规则！');
+        }
+
+        let ruleContent = whistleRules.rules;
+
+        // 设置开启 Capture TUNNEL CONNECTs，否则 https 情况下可能会有问题
+        const shouldEnableCapture = '* enable://capture';
+        ruleContent = `${shouldEnableCapture}\n\n${ruleContent}`;
+
+        // 更新
+        whistleRules.rules = ruleContent;
+
+        // 文件内容
+        const configFileContent = `module.exports = ${JSON.stringify(whistleRules, null, 2)};`;
+
+        // 保存文件
+        fse.outputFileSync(configFile, configFileContent);
+
+        console.log(`成功生成 whistle 规则配置文件: ${configFile}, 文件内容为：\n ${configFileContent}`);
     }
 }
 
