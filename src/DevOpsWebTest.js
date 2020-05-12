@@ -240,95 +240,26 @@ class DevOpsWebTest {
 
     /**
      * 保存自定义报告入口文件
-     * @param {Object} testRecord
+     * @param {Object} data
+     * @param {String} outputPath
      */
-    saveOutputIndexHtml(testRecord, pluginMap) {
+    saveOutputIndexHtml(data, outputPath) {
         // 获取模版内容
         const tplPath = path.join(__dirname, '../tpl/index.html.tpl');
         const tplContent = fse.readFileSync(tplPath, {
             encoding: 'utf8'
         });
 
-        // 总耗时
-        const totalCost = `${testRecord.getTotalCost() / 1000} 秒`;
-
-        // 获取模板中需要的数据
-        const tplData = {
-            testRecord,
-            pkg,
-            totalCost,
-            list1: [],
-            list2: [],
-            e2eTest: {
-                shouldTest: pluginMap.pluginE2ETest.shouldRun(testRecord),
-                msg: pluginMap.pluginE2ETest.testResultReport.testResult.summary,
-                outputUrl: `${path.relative(testRecord.outputPath, pluginMap.pluginE2ETest.outputPath)}/mochawesome.html`
-            },
-            e2eTestCoverage: {
-                shouldRun: pluginMap.pluginE2ETest.shouldRun(testRecord),
-                isExist: pluginMap.pluginE2ETest.isExistCoverageReport,
-                outputUrl: `${path.relative(testRecord.outputPath, pluginMap.pluginE2ETest.coverageOutputPath)}/index.html`
-            },
-            unitTest: {
-                shouldTest: pluginMap.pluginUnitTest.shouldRun(testRecord),
-                msg: pluginMap.pluginUnitTest.testResultReport.testResult.summary,
-                outputUrl: `${path.relative(testRecord.outputPath, pluginMap.pluginUnitTest.outputPath)}/mochawesome.html`
-            },
-            unitTestCoverage: {
-                shouldRun: pluginMap.pluginUnitTest.shouldRun(testRecord),
-                outputUrl: `${path.relative(testRecord.outputPath, pluginMap.pluginUnitTest.coverageOutputPath)}/index.html`
-            }
-        };
-
-        // 从 coverage/index.html 中获取覆盖率信息
-        if (tplData.e2eTestCoverage.shouldRun && tplData.e2eTestCoverage.outputUrl) {
-            const coverageData = getCoverageDataFromIndexHtml(path.join(testRecord.outputPath, tplData.e2eTestCoverage.outputUrl));
-            tplData.e2eTestCoverage.resultMsg = coverageData.htmlResult || '';
-
-            // if (coverageData.data) {
-            //     // 追加结果到蓝盾变量中
-            //     testRecord.addTestCustomParams({
-            //         e2eTestCoverage: coverageData.data
-            //     });
-            // }
-        }
-
-        // 从 coverage/index.html 中获取覆盖率信息
-        if (tplData.unitTestCoverage.shouldRun && tplData.unitTestCoverage.outputUrl) {
-            const coverageData = getCoverageDataFromIndexHtml(path.join(testRecord.outputPath, tplData.unitTestCoverage.outputUrl));
-            tplData.unitTestCoverage.resultMsg = coverageData.htmlResult || '';
-
-            // if (coverageData.data) {
-            //     // 追加结果到蓝盾变量中
-            //     testRecord.addTestCustomParams({
-            //         unitTestCoverage: coverageData.data
-            //     });
-            // }
-        }
-
-        tplData.list2.push({
-            url: `output.zip`,
-            msg: 'output.zip'
-        });
-
-        tplData.list2.push({
-            url: `test-record.json`,
-            msg: 'test-record.json'
-        });
-
-        if (pluginMap.pluginE2ETest.shouldRun(testRecord)) {
-            tplData.list2.push({
-                url: pluginMap.pluginWhistle.configFileName,
-                msg: pluginMap.pluginWhistle.configFileName
-            });
-        }
+        const tplData = Object.assign({
+            pkg
+        }, data);
 
         // 获取最终内容
         let htmlContent = ejs.render(tplContent, tplData);
 
         // 保存文件
-        fse.outputFileSync(this.indexHtmlPath, htmlContent);
-        fse.outputJsonSync(this.indexHtmlDataPath, tplData);
+        fse.outputFileSync(path.join(outputPath, 'index.html'), htmlContent);
+        fse.outputJsonSync(path.join(outputPath, 'index-html.json'), tplData);
     }
 }
 
@@ -410,9 +341,13 @@ function getTestReport(name, opts) {
     // 从覆盖率文件中获得覆盖率数据
     const coverageResult = getCoverageDataFromIndexHtml(coverageHtmlPath);
 
+    const isCoverageSuccess = coverageResult && coverageResult.htmlResult;
+
     return {
         testResult,
-        coverageResult
+        coverageResult,
+        isTestSuccess: true,
+        isCoverageSuccess
     };
 }
 
