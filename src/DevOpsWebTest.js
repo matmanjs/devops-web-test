@@ -5,6 +5,8 @@ const util = require('./util');
 const businessProcessHandler = require('./business/process-handler');
 const businessLocalCache = require('./business/local-cache');
 
+const matman = require('matman');
+
 class DevOpsWebTest {
     constructor(dwtPath, config = {}) {
         // DWT（DevOps for Web Test） 目录，流水线式执行web自动化测试和输出测试产物的路径，如果插件传入了相对路径，则是相对于该路径而言
@@ -136,6 +138,61 @@ class DevOpsWebTest {
         fse.outputFileSync(configFile, configFileContent);
 
         console.log(`成功生成 whistle 规则配置文件: ${configFile}, 文件内容为：\n ${configFileContent}`);
+    }
+
+    /**
+     * 分析并生成测试覆盖率数据
+     *
+     * @param globPattern
+     * @param reporterDir
+     */
+    async createE2ECoverage(globPattern, reporterDir) {
+        console.log('准备生成端对端自动化测试报告！', globPattern, reporterDir);
+
+        return await matman.istanbulUtil.createE2ECoverage(globPattern, {
+            dir: reporterDir
+        })
+            .then((data) => {
+                console.log('生成端对端自动化测试报告成功！', data);
+                return data;
+            })
+            .catch((err) => {
+                this.isExistCoverageReport = false;
+                console.error('生成端对端自动化测试报告失败！', err && err.message || err);
+            });
+    }
+
+    /**
+     * 将端对端测试运行结果拷贝到归档目录中
+     *
+     * @param opts
+     */
+    async copyMatmanBuildOutputToArchive(opts = {}) {
+        try {
+            const {
+                srcPath,
+                distPath,
+                generatedE2ECoverageDir,
+                coverageOutputPath
+            } = opts;
+
+            if (fse.pathExistsSync(srcPath)) {
+                // 将端对端测试运行结果拷贝到归档目录中
+                fse.copySync(srcPath, distPath);
+            }
+
+            if (fse.pathExistsSync(generatedE2ECoverageDir)) {
+                // 把生成的覆盖率的结果单独拷贝处理
+                fse.copySync(generatedE2ECoverageDir, coverageOutputPath);
+            }
+
+            // 需要移除部分不需要的文件，避免最后归档文件过大
+            fse.removeSync(path.join(distPath, 'coverage_output'));
+
+            console.log('copyMatmanBuildOutputToArchive success!');
+        } catch (err) {
+            console.error(err);
+        }
     }
 }
 
