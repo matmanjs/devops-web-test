@@ -1,6 +1,6 @@
 {
   "name": "devops-web-test",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "web test for devops",
   "main": "lib/index.js",
   "scripts": {
