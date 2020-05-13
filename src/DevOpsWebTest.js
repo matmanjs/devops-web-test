@@ -67,6 +67,28 @@ class DevOpsWebTest {
         return Date.now() - this._startTime;
     }
 
+    /**
+     * 清理
+     *
+     * @param opts
+     * @param opts.doNotRemoveOutput
+     * @return {Promise<void>}
+     */
+    async clean(opts = {}) {
+        // 清理本地缓存的记录，记录了过去占用的端口等信息
+        await businessLocalCache.clean({
+            seqId: this.seqId
+        });
+
+        if (!opts.doNotRemoveOutput) {
+            // 清理掉 output 目录
+            console.log('\n');
+            console.log(`准备清理 output 文件: ${this.outputPath}`);
+            fse.removeSync(this.outputPath);
+            console.log(`清理 output 文件成功！`);
+        }
+    }
+
     async saveJsonFile(jsonFilePath, jsonData) {
         fse.outputJsonSync(jsonFilePath, jsonData);
     }
