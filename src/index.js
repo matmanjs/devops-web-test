@@ -12,6 +12,8 @@ const PluginArchive = require('./plugins/Archive');
 const PluginExit = require('./plugins/Exit');
 const PluginCustom = require('./plugins/Custom');
 
+const DevOpsWebTest = require('./DevOpsWebTest');
+
 module.exports = {
     start: testController.start,
     runCmd,
@@ -24,5 +26,6 @@ module.exports = {
     PluginArchive,
     PluginCustom,
     PluginExit,
-    BasePlugin
+    BasePlugin,
+    DevOpsWebTest
 };

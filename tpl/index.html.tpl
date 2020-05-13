@@ -13,13 +13,13 @@ web自动化测试结果报告，生成时间：<code><%=new Date()%></code> ，
 <h3>1.1 单元测试</h3>
 <%=unitTest.msg%>
 
-<% if(unitTest.shouldTest){ %>
-<p><a href="<%=unitTest.outputUrl%>" target="_blank">单元测试详细报告</a></p>
+<% if(unitTest.isTestSuccess){ %>
+<p><a href="<%=unitTest.testOutputUrl%>" target="_blank">单元测试详细报告</a></p>
 <% } %>
 
-<% if(unitTestCoverage.shouldRun){ %>
-<p><a href="<%=unitTestCoverage.outputUrl%>" target="_blank">单元测试覆盖率报告</a></p>
-<%- unitTestCoverage.resultMsg %>
+<% if(unitTest.isCoverageSuccess){ %>
+<p><a href="<%=unitTest.coverageOutputUrl%>" target="_blank">单元测试覆盖率报告</a></p>
+<%- unitTest.coverageMsg %>
 <% } %>
 
 
@@ -27,23 +27,23 @@ web自动化测试结果报告，生成时间：<code><%=new Date()%></code> ，
 
 <%=e2eTest.msg%>
 
-<% if(e2eTest.shouldTest){ %>
-<p><a href="<%=e2eTest.outputUrl%>" target="_blank">端对端测试详细报告</a></p>
+<% if(e2eTest.isTestSuccess){ %>
+<p><a href="<%=e2eTest.testOutputUrl%>" target="_blank">端对端测试详细报告</a></p>
 <% } %>
 
-<% if(e2eTestCoverage.isExist){ %>
-<p><a href="<%=e2eTestCoverage.outputUrl%>" target="_blank">端对端测试覆盖率报告</a></p>
-<%- e2eTestCoverage.resultMsg %>
+<% if(e2eTest.isCoverageSuccess){ %>
+<p><a href="<%=e2eTest.coverageOutputUrl%>" target="_blank">端对端测试覆盖率报告</a></p>
+<%- e2eTest.coverageMsg %>
 <% } %>
 
 <h3>1.3 其他</h3>
 
 <ul>
-<% for(var i=0; i < list2.length; i++){ %>
-<% if(list2[i].url){ %>
-    <li><a href="<%=list2[i].url%>" target="_blank"><%=list2[i].msg%></a></li>
+<% for(var i=0; i < moreLinks.length; i++){ %>
+<% if(moreLinks[i].url){ %>
+    <li><a href="<%=moreLinks[i].url%>" target="_blank"><%=moreLinks[i].msg%></a></li>
 <% }else{ %>
-   <li><%=list2[i].msg%></li>
+   <li><%=moreLinks[i].msg%></li>
 <% } %>
 <% } %>
 </ul>
