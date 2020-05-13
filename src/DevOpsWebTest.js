@@ -202,32 +202,6 @@ class DevOpsWebTest {
     }
 
     /**
-     * 获得 matman 端对端测试报告数据
-     *
-     * @param {Boolean} enableTest
-     * @param {String} mochawesomeFilePath
-     * @param {String} coverageHtmlPath
-     * @return {Object}
-     */
-    getE2ETestReport(enableTest, mochawesomeFilePath, coverageHtmlPath) {
-        return getTestReport('端对端测试', enableTest, mochawesomeFilePath, coverageHtmlPath);
-    }
-
-    /**
-     * 获得单元测试报告数据
-     *
-     * @param {Boolean} enableTest
-     * @param {String} outputPath
-     * @return {Object}
-     */
-    getUnitTestReport(enableTest, outputPath) {
-        // 产出文件: unit_test_report/mochawesome.json
-        const unitTestReportPath = `${outputPath}/mochawesome.json`;
-
-        return getTestReport('单元测试', enableTest, unitTestReportPath);
-    }
-
-    /**
      * 获得单元测试报告数据
      *
      * @param {String} name
@@ -262,7 +236,7 @@ class DevOpsWebTest {
         fse.outputJsonSync(path.join(outputPath, 'index-html.json'), tplData);
     }
 
-    async compressDir(sourceFolder,outputZipPath) {
+    async compressDir(sourceFolder, outputZipPath) {
         const source = sourceFolder;
         const tmpDest = path.join(__dirname, path.basename(outputZipPath));
         const dest = outputZipPath;
