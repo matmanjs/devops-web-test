@@ -31,6 +31,11 @@ function getCache(filePath) {
  * @return {undefined}
  */
 function saveCache(obj, filePath) {
+    if (!obj) {
+        console.error(`[saveCache] obj is ${typeof obj}`, filePath);
+        return;
+    }
+
     let doc;
 
     try {
