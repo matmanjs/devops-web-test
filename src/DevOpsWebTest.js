@@ -144,7 +144,7 @@ class DevOpsWebTest {
     }
 
     async generateWhistleRulesConfigFile(configFile, getWhistleRules) {
-        const whistleRules = getWhistleRules();
+        const whistleRules = getWhistleRules(this);
 
         // 校验合法性
         if (!whistleRules || !whistleRules.name || !whistleRules.rules) {
