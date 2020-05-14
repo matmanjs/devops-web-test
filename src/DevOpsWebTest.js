@@ -21,6 +21,8 @@ class DevOpsWebTest {
         // 测试产物输出目录
         this.outputPath = util.getAbsolutePath(this.dwtPath, config.outputPath || 'output');
 
+        this.NPM = config.NPM || 'npm';
+
         // 是否为开发者模式
         this.isDev = !!config.isDev;
 
