@@ -13,11 +13,11 @@ web自动化测试结果报告，生成时间：<code><%=new Date()%></code> ，
 <h3>1.1 单元测试</h3>
 <%=unitTest.msg%>
 
-<% if(unitTest.isTestSuccess){ %>
+<% if(unitTest.testOutputUrl){ %>
 <p><a href="<%=unitTest.testOutputUrl%>" target="_blank">单元测试详细报告</a></p>
 <% } %>
 
-<% if(unitTest.isCoverageSuccess){ %>
+<% if(unitTest.coverageOutputUrl){ %>
 <p><a href="<%=unitTest.coverageOutputUrl%>" target="_blank">单元测试覆盖率报告</a></p>
 <%- unitTest.coverageMsg %>
 <% } %>
@@ -27,11 +27,11 @@ web自动化测试结果报告，生成时间：<code><%=new Date()%></code> ，
 
 <%=e2eTest.msg%>
 
-<% if(e2eTest.isTestSuccess){ %>
+<% if(e2eTest.testOutputUrl){ %>
 <p><a href="<%=e2eTest.testOutputUrl%>" target="_blank">端对端测试详细报告</a></p>
 <% } %>
 
-<% if(e2eTest.isCoverageSuccess){ %>
+<% if(e2eTest.coverageOutputUrl){ %>
 <p><a href="<%=e2eTest.coverageOutputUrl%>" target="_blank">端对端测试覆盖率报告</a></p>
 <%- e2eTest.coverageMsg %>
 <% } %>
@@ -51,7 +51,7 @@ web自动化测试结果报告，生成时间：<code><%=new Date()%></code> ，
 <h2>2. 额外说明</h2>
 
 <p>本报告涉及的web自动化测试方案，详见 <a href="https://matmanjs.github.io/matman/" target="_blank">https://matmanjs.github.io/matman/</a> ，有任何讨论欢迎 <a href="https://github.com/matmanjs/devops-web-test/issues" target="_blank">提issue</a> 。</p>
-<p><a href="https://npmjs.com/package/<%=pkg.name%>" target="_blank"><%=pkg.name%></a> v<%=pkg.version%> <p/>
+<p>Power by <a href="https://npmjs.com/package/<%=pkg.name%>" target="_blank"><%=pkg.name%></a> v<%=pkg.version%> <p/>
 
 </body>
 </html>

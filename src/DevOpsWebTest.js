@@ -67,6 +67,28 @@ class DevOpsWebTest {
         return Date.now() - this._startTime;
     }
 
+    /**
+     * 清理
+     *
+     * @param opts
+     * @param opts.doNotRemoveOutput
+     * @return {Promise<void>}
+     */
+    async clean(opts = {}) {
+        // 清理本地缓存的记录，记录了过去占用的端口等信息
+        await businessLocalCache.clean({
+            seqId: this.seqId
+        });
+
+        if (!opts.doNotRemoveOutput) {
+            // 清理掉 output 目录
+            console.log('\n');
+            console.log(`准备清理 output 文件: ${this.outputPath}`);
+            fse.removeSync(this.outputPath);
+            console.log(`清理 output 文件成功！`);
+        }
+    }
+
     async saveJsonFile(jsonFilePath, jsonData) {
         fse.outputJsonSync(jsonFilePath, jsonData);
     }
@@ -202,32 +224,6 @@ class DevOpsWebTest {
     }
 
     /**
-     * 获得 matman 端对端测试报告数据
-     *
-     * @param {Boolean} enableTest
-     * @param {String} mochawesomeFilePath
-     * @param {String} coverageHtmlPath
-     * @return {Object}
-     */
-    getE2ETestReport(enableTest, mochawesomeFilePath, coverageHtmlPath) {
-        return getTestReport('端对端测试', enableTest, mochawesomeFilePath, coverageHtmlPath);
-    }
-
-    /**
-     * 获得单元测试报告数据
-     *
-     * @param {Boolean} enableTest
-     * @param {String} outputPath
-     * @return {Object}
-     */
-    getUnitTestReport(enableTest, outputPath) {
-        // 产出文件: unit_test_report/mochawesome.json
-        const unitTestReportPath = `${outputPath}/mochawesome.json`;
-
-        return getTestReport('单元测试', enableTest, unitTestReportPath);
-    }
-
-    /**
      * 获得单元测试报告数据
      *
      * @param {String} name
@@ -262,7 +258,7 @@ class DevOpsWebTest {
         fse.outputJsonSync(path.join(outputPath, 'index-html.json'), tplData);
     }
 
-    async compressDir(sourceFolder,outputZipPath) {
+    async compressDir(sourceFolder, outputZipPath) {
         const source = sourceFolder;
         const tmpDest = path.join(__dirname, path.basename(outputZipPath));
         const dest = outputZipPath;
