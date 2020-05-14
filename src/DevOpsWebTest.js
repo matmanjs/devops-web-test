@@ -13,6 +13,13 @@ const businessLocalCache = require('./business/local-cache');
 
 const matman = require('matman');
 
+// 执行结果错误码: 0=成功，1=失败, 2=不执行测试
+const TEST_RESULT_CODE = {
+    SUCCESS: 0,
+    FAIL: 1,
+    SKIPPED: 2
+};
+
 class DevOpsWebTest {
     constructor(dwtPath, config = {}) {
         // DWT（DevOps for Web Test） 目录，流水线式执行web自动化测试和输出测试产物的路径，如果插件传入了相对路径，则是相对于该路径而言
@@ -321,6 +328,7 @@ function getTestReport(name, opts) {
     if (!enableTest) {
         return {
             testResult: {
+                resultCode: TEST_RESULT_CODE.SKIPPED,
                 summary: `已配置不执行${name}！`
             }
         };
@@ -330,6 +338,7 @@ function getTestReport(name, opts) {
     if (!fse.existsSync(mochawesomeFilePath)) {
         return {
             testResult: {
+                resultCode: TEST_RESULT_CODE.FAIL,
                 summary: `${name}失败，没有测试报告！`
             }
         };
@@ -355,6 +364,8 @@ function getTestReport(name, opts) {
     // 报告汇总
     // 单元测试通过率: 98.85%（431/436)，实际成功率: 100.00%（431/(431+0)，耗时 0.112秒，总用例数436个，成功431个，失败0个，主动跳过未执行4个，超时异常未执行1个
     testResult.summary = `${name}通过率: ${testResult.passPercent}%（${testResult.stats.passes}/${testResult.stats.testsRegistered})，实际成功率: ${testResult.actualSuccessPercent}%（${testResult.stats.passes}/(${testResult.stats.passes}+${testResult.stats.failures})，耗时 ${testResult.duration}，总用例数${testResult.stats.testsRegistered}个，成功${testResult.stats.passes}个，失败${testResult.stats.failures}个，主动跳过未执行${testResult.stats.pending}个，超时异常未执行${testResult.stats.skipped}个`;
+
+    testResult.resultCode = (testResult.stats.failures !== 0 || testResult.stats.skipped !== 0) ? TEST_RESULT_CODE.FAIL : TEST_RESULT_CODE.SUCCESS;
 
     // 从覆盖率文件中获得覆盖率数据
     const coverageResult = getCoverageDataFromIndexHtml(coverageHtmlPath);
