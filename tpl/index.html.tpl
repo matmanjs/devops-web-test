@@ -6,7 +6,7 @@
 </head>
 <body>
 <h1>web自动化测试结果报告</h1>
-web自动化测试结果报告，生成时间：<code><%=new Date()%></code> ，累计耗时： <%= totalCost %>。</p>
+<p>web自动化测试结果报告，生成时间：<code><%=new Date()%></code> ，累计耗时： <%= totalCost %>。</p>
 
 <h2>1. web自动化测试结果</h2>
 
