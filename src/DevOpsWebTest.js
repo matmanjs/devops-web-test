@@ -143,8 +143,8 @@ class DevOpsWebTest {
             });
     }
 
-    async generateWhistleRulesConfigFile(configFile, getWhistleRules) {
-        const whistleRules = getWhistleRules(this);
+    async generateWhistleRulesConfigFile(configFile, getWhistleRules, handleWhistleRules) {
+        let whistleRules = getWhistleRules(this);
 
         // 校验合法性
         if (!whistleRules || !whistleRules.name || !whistleRules.rules) {
@@ -160,6 +160,11 @@ class DevOpsWebTest {
 
         // 更新
         whistleRules.rules = ruleContent;
+
+        // 自定义更改规则内容
+        if (typeof handleWhistleRules === 'function') {
+            whistleRules = handleWhistleRules(whistleRules);
+        }
 
         // 文件内容
         const configFileContent = `module.exports = ${JSON.stringify(whistleRules, null, 2)};`;
