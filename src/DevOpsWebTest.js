@@ -252,10 +252,11 @@ class DevOpsWebTest {
      * 保存自定义报告入口文件
      * @param {Object} data
      * @param {String} outputPath
+     * @param {Object} opts
      */
-    saveOutputIndexHtml(data, outputPath) {
+    saveOutputIndexHtml(data, outputPath, opts = {}) {
         // 获取模版内容
-        const tplPath = path.join(__dirname, '../tpl/index.html.tpl');
+        const tplPath = opts.tplPath || path.join(__dirname, '../tpl/index.html.tpl');
         const tplContent = fse.readFileSync(tplPath, {
             encoding: 'utf8'
         });
